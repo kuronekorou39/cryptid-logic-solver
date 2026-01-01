@@ -1,40 +1,112 @@
+# Cryptid Logic Solver
 
-​1. プロジェクト概要
-​ボードゲーム『クリプティッド』のプレイ中に、各プレイヤーが持っているヒント（手がかり）を論理的に絞り込むためのWebアプリ。
-​ターゲット: ブラウザ（PC/スマホ両対応）
-​公開形式: GitHub Pages (静的サイト)
-​開発ツール: Claude Code, React, TypeScript, Tailwind CSS
-​2. 主要機能（MVPスコープ）
-​① ヒント・データベース (Master Data)
-​ゲームに存在する全ヒント（例：「森林か山岳にいる」「青い構造物から2マス以内」など）を内部データとして保持。
-​ノーマルモード、ハードモードの両方のヒントに対応。
-​② プレイヤー管理パネル
-​プレイヤー名（または色）を登録。
-​各プレイヤーの「ヒント候補リスト」を表示。最初は全ヒントにチェックが入っている状態。
-​③ 論理消去エンジン (Filtering Logic)
-​ここが重要： 特定のマスに誰かが「キューブ（UMAはいない）」を置いた際、その座標の情報を入力すると、「そのマスをYES判定してしまうヒント」を、そのプレイヤーの候補から自動的に除外する。
-​④ マス情報入力
-​座標（例：A-1）と、そのマスの属性（地形、構造物の有無）を選択する簡易入力フォーム。
-​3. データ構造案 (JSONイメージ)
-​Claude Codeに「これをベースにデータを作って」と指示するための構造です。
+ボードゲーム「クリプティッド」のヒント推論補助ツール。各プレイヤーのヒントを論理的に絞り込み、UMA（未確認生物）の居場所を特定する手助けをします。
 
-{
-  "hints": [
-    { "id": 1, "text": "森林か山岳にいる", "type": "terrain" },
-    { "id": 2, "text": "青い建造物から2マス以内にいる", "type": "structure", "color": "blue", "range": 2 }
-  ],
-  "maps": [
-    { "setup_id": "001", "tiles": [...] }
-  ]
-}
+## デモ
 
-4. 画面設計 (UI/UX)
-​Header: タイトルとリセットボタン。
-​Input Area: マス目を選択し、「誰がキューブを置いたか」を入力するフォーム。
-​Dashboard: 全プレイヤーの「残りヒント数」をプログレスバーや数字で表示。
-​Detail View: プレイヤーをタップすると、現在「可能性が残っているヒント」の一覧をチェックボックス形式で表示。
-​5. Claude Code への最初の指示（プロンプト案）
-​開発を始める際、Claude Codeに以下のように伝えてみてください。
-​「ボードゲーム『クリプティッド』の推論補助ツールを作りたい。React + Tailwind CSS + Viteを使用して、GitHub Pagesにデプロイ可能なSPAを作成して。
-​まずは、全ヒントをデータとして保持し、各プレイヤーが持つヒントの候補を消去法で絞り込めるロジックを実装したい。特定の座標に対して『このプレイヤーがNO（ここにUMAはいない）』と回答したとき、その座標で成立してしまうヒントを候補から外す機能をコアにして。UIはスマホで操作しやすいカード形式にしてほしい。」
+**[https://kuronekorou39.github.io/cryptid-logic-solver/](https://kuronekorou39.github.io/cryptid-logic-solver/)**
 
+## 機能
+
+- **ヒント消去エンジン** - キューブ（NO）/ディスク（YES）の配置に基づき、不可能なヒントを自動消去
+- **2つのゲームモード** - ノーマル（42ヒント）/ アドバンスト（67ヒント）対応
+- **プレイヤー管理** - 3〜5人のプレイヤーをカラーで識別
+- **アクション履歴** - 全アクションを記録、取り消し機能付き
+- **進捗表示** - 各プレイヤーのヒント絞り込み状況をプログレスバーで可視化
+- **自動保存** - localStorageによるゲーム状態の永続化
+- **モバイル対応** - スマートフォンでも快適に操作可能
+
+## 技術スタック
+
+- [React](https://react.dev/) 18 - UIフレームワーク
+- [TypeScript](https://www.typescriptlang.org/) 5.6 - 型安全性
+- [Vite](https://vitejs.dev/) - ビルドツール
+- [Tailwind CSS](https://tailwindcss.com/) - スタイリング
+
+## プロジェクト構成
+
+```
+src/
+├── types/                 # 型定義
+│   └── index.ts          # 全インターフェース・型
+├── data/                  # ゲームデータ
+│   ├── index.ts          # データエクスポート
+│   ├── hints-normal.ts   # ノーマルモードのヒント（42件）
+│   ├── hints-advanced.ts # アドバンストモードのヒント（25件）
+│   └── constants.ts      # 地形・構造物・動物の定数
+├── logic/                 # コアロジック
+│   └── elimination.ts    # ヒント評価・消去アルゴリズム
+├── context/               # 状態管理
+│   └── GameContext.tsx   # React Context + Reducer
+├── hooks/                 # カスタムフック
+│   └── useGame.ts        # Context利用フック
+├── components/            # UIコンポーネント
+│   ├── Header.tsx            # ヘッダー
+│   ├── GameSetup.tsx         # ゲーム設定画面
+│   ├── GameBoard.tsx         # メインゲーム画面
+│   ├── PlayerCard.tsx        # プレイヤーカード
+│   ├── ActionInputForm.tsx   # アクション入力フォーム
+│   ├── PlayerDetailModal.tsx # ヒント詳細モーダル
+│   └── ActionHistory.tsx     # アクション履歴
+├── App.tsx                # ルートコンポーネント
+├── main.tsx               # エントリーポイント
+└── index.css              # グローバルスタイル
+```
+
+## 主要ファイル
+
+| ファイル | 説明 |
+|---------|------|
+| [src/logic/elimination.ts](src/logic/elimination.ts) | ヒント評価・消去のコアアルゴリズム |
+| [src/context/GameContext.tsx](src/context/GameContext.tsx) | ゲーム状態管理（Reducer パターン） |
+| [src/data/hints-normal.ts](src/data/hints-normal.ts) | ノーマルモードの全42ヒント定義 |
+| [src/data/hints-advanced.ts](src/data/hints-advanced.ts) | アドバンストモード追加25ヒント定義 |
+| [src/components/ActionInputForm.tsx](src/components/ActionInputForm.tsx) | マス情報入力UI |
+| [src/components/PlayerDetailModal.tsx](src/components/PlayerDetailModal.tsx) | プレイヤーのヒント一覧表示 |
+
+## ゲームロジック
+
+### ヒント消去の仕組み
+
+1. **キューブ配置（NO）**: プレイヤーが「UMAはここにいない」と宣言
+   - そのマスで**成立するヒント**を候補から除外（持っていたらYESと答えるはずだから）
+
+2. **ディスク配置（YES）**: プレイヤーが「UMAがいる可能性がある」と宣言
+   - そのマスで**成立しないヒント**を候補から除外（持っていたらNOと答えるはずだから）
+
+### ヒントの種類
+
+| カテゴリ | 例 |
+|---------|-----|
+| 地形 | 「森林か砂漠にいる」「山岳から1マス以内」 |
+| 構造物 | 「青い建造物から2マス以内」「廃墟から3マス以内」 |
+| 動物 | 「クマの縄張り内」「ピューマから2マス以内」 |
+
+## セットアップ
+
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバー起動
+npm run dev
+
+# 本番ビルド
+npm run build
+
+# プレビュー
+npm run preview
+```
+
+## 使い方
+
+1. **ゲームモード選択** - ノーマル or アドバンスト
+2. **プレイヤー登録** - 3〜5人のプレイヤーを色で登録
+3. **ゲーム開始**
+4. **アクション入力** - キューブ/ディスクを置いたマスの情報を入力
+5. **ヒント確認** - プレイヤーカードをタップして残りのヒント候補を確認
+6. **繰り返し** - UMAの居場所が特定できるまで続ける
+
+## ライセンス
+
+MIT
