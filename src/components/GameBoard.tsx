@@ -122,14 +122,77 @@ function getTabBgClass(color: string, isSelected: boolean) {
   return lightColors[color] || 'bg-gray-100'
 }
 
+// フィルター用の型
+type FilterType = 'terrain' | 'animal' | 'structure'
+type FilterValue = TerrainType | AnimalType | StructureColor | 'anyAnimal' | 'anyStructure' | 'stone' | 'shack'
+
+// ヒントがフィルターにマッチするか判定
+function hintMatchesFilter(hint: Hint, filterType: FilterType, filterValue: FilterValue): boolean {
+  const { condition } = hint
+
+  if (filterType === 'terrain') {
+    return condition.terrains?.includes(filterValue as TerrainType) ?? false
+  }
+
+  if (filterType === 'animal') {
+    if (filterValue === 'anyAnimal') {
+      return condition.anyAnimal === true
+    }
+    return condition.animals?.includes(filterValue as AnimalType) ?? false
+  }
+
+  if (filterType === 'structure') {
+    if (filterValue === 'anyStructure') {
+      return condition.anyStructure === true
+    }
+    // 巨石（緑+青）
+    if (filterValue === 'stone') {
+      const colors = condition.structureColors
+      return !!(colors && colors.includes('green') && colors.includes('blue') && colors.length === 2)
+    }
+    // 廃墟（白+黒）
+    if (filterValue === 'shack') {
+      const colors = condition.structureColors
+      return !!(colors && colors.includes('white') && colors.includes('black') && colors.length === 2)
+    }
+    return condition.structureColors?.includes(filterValue as StructureColor) ?? false
+  }
+
+  return false
+}
+
 export function GameBoard() {
   const { state, toggleHint, addPlayer, removePlayer, resetGame, setMode } = useGame()
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(state.players[0]?.id || '')
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
+  const [activeFilters, setActiveFilters] = useState<{ type: FilterType; value: FilterValue }[]>([])
 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
+
+  // フィルター適用
+  const filteredHints = activeFilters.length === 0
+    ? allHints
+    : allHints.filter((hint) =>
+        activeFilters.every((f) => hintMatchesFilter(hint, f.type, f.value))
+      )
+
+  // フィルターのトグル
+  const toggleFilter = (type: FilterType, value: FilterValue) => {
+    setActiveFilters((prev) => {
+      const exists = prev.some((f) => f.type === type && f.value === value)
+      if (exists) {
+        return prev.filter((f) => !(f.type === type && f.value === value))
+      }
+      return [...prev, { type, value }]
+    })
+  }
+
+  const isFilterActive = (type: FilterType, value: FilterValue) =>
+    activeFilters.some((f) => f.type === type && f.value === value)
+
+  const clearFilters = () => setActiveFilters([])
 
   const usedColors = state.players.map((p) => p.color)
   const availableColors = PLAYER_COLORS.filter((c) => !usedColors.includes(c.color))
@@ -159,11 +222,11 @@ export function GameBoard() {
     }
   }
 
-  // カテゴリごとにグループ化
+  // カテゴリごとにグループ化（フィルター適用後）
   const hintsByCategory = {
-    terrain: allHints.filter((h) => h.category === 'terrain'),
-    structure: allHints.filter((h) => h.category === 'structure'),
-    animal: allHints.filter((h) => h.category === 'animal'),
+    terrain: filteredHints.filter((h) => h.category === 'terrain'),
+    structure: filteredHints.filter((h) => h.category === 'structure'),
+    animal: filteredHints.filter((h) => h.category === 'animal'),
   }
 
   const categoryLabels = {
@@ -286,10 +349,115 @@ export function GameBoard() {
         </div>
       )}
 
+      {/* フィルターバー */}
+      {selectedPlayer && (
+        <div className="bg-white rounded-xl shadow p-3 mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-500 font-medium">絞り込み</span>
+            {activeFilters.length > 0 && (
+              <button
+                onClick={clearFilters}
+                className="text-xs text-red-500 hover:text-red-600"
+              >
+                クリア
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {/* 地形フィルター */}
+            {(['forest', 'desert', 'swamp', 'mountain', 'water'] as TerrainType[]).map((t) => {
+              const info = terrainIcons[t]
+              const active = isFilterActive('terrain', t)
+              return (
+                <button
+                  key={t}
+                  onClick={() => toggleFilter('terrain', t)}
+                  className={`p-1.5 rounded-lg transition-all ${
+                    active
+                      ? 'bg-emerald-100 ring-2 ring-emerald-500'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                  title={t}
+                >
+                  <span className={info.color}>{info.icon}</span>
+                </button>
+              )
+            })}
+            <span className="w-px bg-gray-300 mx-1" />
+            {/* 動物フィルター */}
+            {(['bear', 'cougar'] as AnimalType[]).map((a) => {
+              const info = animalIcons[a]
+              const active = isFilterActive('animal', a)
+              return (
+                <button
+                  key={a}
+                  onClick={() => toggleFilter('animal', a)}
+                  className={`p-1.5 rounded-lg transition-all ${
+                    active
+                      ? 'bg-emerald-100 ring-2 ring-emerald-500'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className={info.color}>{info.icon}</span>
+                </button>
+              )
+            })}
+            <span className="w-px bg-gray-300 mx-1" />
+            {/* 構造物フィルター - 巨石・廃墟・個別色 */}
+            <button
+              onClick={() => toggleFilter('structure', 'stone')}
+              className={`p-1.5 rounded-lg transition-all ${
+                isFilterActive('structure', 'stone')
+                  ? 'bg-emerald-100 ring-2 ring-emerald-500'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+              title="巨石"
+            >
+              <span className="text-teal-600"><GreenStoneIcon /></span>
+            </button>
+            <button
+              onClick={() => toggleFilter('structure', 'shack')}
+              className={`p-1.5 rounded-lg transition-all ${
+                isFilterActive('structure', 'shack')
+                  ? 'bg-emerald-100 ring-2 ring-emerald-500'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+              title="廃墟"
+            >
+              <span className="text-gray-600"><WhiteShackIcon /></span>
+            </button>
+            {(['blue', 'white', 'green', 'black'] as StructureColor[]).map((c) => {
+              const info = structureIcons[c]
+              const active = isFilterActive('structure', c)
+              return (
+                <button
+                  key={c}
+                  onClick={() => toggleFilter('structure', c)}
+                  className={`p-1.5 rounded-lg transition-all ${
+                    active
+                      ? 'bg-emerald-100 ring-2 ring-emerald-500'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className={info.color}>{info.icon}</span>
+                </button>
+              )
+            })}
+          </div>
+          {activeFilters.length > 0 && (
+            <div className="mt-2 text-xs text-gray-500">
+              {filteredHints.length}件のヒントが該当
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ヒントリスト */}
       {selectedPlayer ? (
-        <div className="space-y-3 pt-2">
-          {Object.entries(hintsByCategory).map(([category, hints]) => (
+        <div className="space-y-3">
+          {Object.entries(hintsByCategory)
+            .filter(([, hints]) => hints.length > 0)
+            .map(([category, hints]) => (
             <div key={category} className="bg-white rounded-xl shadow p-3">
               <h3 className="font-bold text-gray-700 text-sm mb-2 border-b pb-1">
                 {categoryLabels[category as keyof typeof categoryLabels]}
