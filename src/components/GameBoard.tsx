@@ -69,14 +69,34 @@ function getHintIcons(hint: Hint): React.ReactNode[] {
 
   // 構造物
   if (condition.structureColors) {
-    condition.structureColors.forEach((c, i) => {
-      const info = structureIcons[c]
+    const colors = condition.structureColors
+    // 巨石（緑+青）
+    if (colors.includes('green') && colors.includes('blue') && colors.length === 2) {
       icons.push(
-        <span key={`structure-${i}`} className={info.color}>
-          {info.icon}
+        <span key="stone" className="text-teal-600">
+          <GreenStoneIcon />
         </span>
       )
-    })
+    }
+    // 廃墟（白+黒）
+    else if (colors.includes('white') && colors.includes('black') && colors.length === 2) {
+      icons.push(
+        <span key="shack" className="text-gray-600">
+          <WhiteShackIcon />
+        </span>
+      )
+    }
+    // 個別の色
+    else {
+      colors.forEach((c, i) => {
+        const info = structureIcons[c]
+        icons.push(
+          <span key={`structure-${i}`} className={info.color}>
+            {info.icon}
+          </span>
+        )
+      })
+    }
   }
   if (condition.anyStructure) {
     icons.push(
