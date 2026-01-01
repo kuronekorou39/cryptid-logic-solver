@@ -53,79 +53,82 @@ export function GameBoard() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* プレイヤータブ */}
-      <div className="flex gap-1 overflow-x-auto pb-1">
-        {state.players.map((player) => {
-          const colorInfo = PLAYER_COLOR_MAP[player.color]
-          const isSelected = selectedPlayerId === player.id
-          const remainingCount = player.possibleHintIds.length
+    <div>
+      {/* 固定タブバー */}
+      <div className="sticky top-0 z-10 bg-gray-100 pb-2">
+        <div className="flex border-b border-gray-300 bg-white rounded-t-lg overflow-hidden">
+          {state.players.map((player) => {
+            const colorInfo = PLAYER_COLOR_MAP[player.color]
+            const isSelected = selectedPlayerId === player.id
+            const remainingCount = player.possibleHintIds.length
 
-          return (
+            return (
+              <button
+                key={player.id}
+                onClick={() => setSelectedPlayerId(player.id)}
+                className={`relative flex-1 min-w-0 py-2 px-1 text-center transition-all border-b-2 ${
+                  isSelected
+                    ? `${colorInfo.bgClass} text-white border-transparent`
+                    : 'bg-gray-50 text-gray-600 border-transparent hover:bg-gray-100'
+                }`}
+              >
+                <div className="truncate text-sm font-medium">{player.name}</div>
+                <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                  {remainingCount}/{allHints.length}
+                </div>
+                {/* 削除ボタン */}
+                {isSelected && state.players.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemovePlayer(player.id)
+                    }}
+                    className="absolute top-0 right-0 w-5 h-5 bg-black/30 text-white rounded-bl text-xs"
+                  >
+                    ×
+                  </button>
+                )}
+              </button>
+            )
+          })}
+
+          {/* 追加タブ */}
+          {canAddPlayer && !isAddingPlayer && (
             <button
-              key={player.id}
-              onClick={() => setSelectedPlayerId(player.id)}
-              className={`flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-all relative ${
-                isSelected
-                  ? `${colorInfo.bgClass} text-white`
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
+              onClick={() => setIsAddingPlayer(true)}
+              className="flex-shrink-0 w-12 py-2 bg-gray-100 hover:bg-gray-200 text-gray-500 text-xl font-bold border-b-2 border-transparent"
             >
-              <span>{player.name}</span>
-              <span className={`ml-1 text-xs ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
-                ({remainingCount})
-              </span>
-              {/* 削除ボタン（選択中のみ） */}
-              {isSelected && state.players.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleRemovePlayer(player.id)
-                  }}
-                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none"
-                >
-                  ×
-                </button>
-              )}
+              +
             </button>
-          )
-        })}
-
-        {/* 追加ボタン */}
-        {canAddPlayer && !isAddingPlayer && (
-          <button
-            onClick={() => setIsAddingPlayer(true)}
-            className="flex-shrink-0 w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-500 text-xl font-bold transition-colors"
-          >
-            +
-          </button>
-        )}
+          )}
+        </div>
 
         {/* 追加フォーム */}
         {isAddingPlayer && (
-          <div className="flex gap-1 flex-shrink-0">
+          <div className="flex gap-2 p-2 bg-white border-x border-b border-gray-300 rounded-b-lg">
             <input
               type="text"
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
-              placeholder="名前"
+              placeholder="プレイヤー名"
               autoFocus
-              className="w-20 px-2 py-1 border rounded text-sm"
+              maxLength={10}
+              className="flex-1 px-3 py-2 border rounded-lg text-sm"
             />
             <button
               onClick={handleAddPlayer}
               disabled={!newPlayerName.trim()}
-              className="px-2 py-1 bg-emerald-500 text-white rounded text-sm disabled:bg-gray-300"
+              className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm disabled:bg-gray-300"
             >
-              OK
+              追加
             </button>
             <button
               onClick={() => {
                 setIsAddingPlayer(false)
                 setNewPlayerName('')
               }}
-              className="px-2 py-1 bg-gray-300 rounded text-sm"
+              className="px-3 py-2 bg-gray-200 rounded-lg text-sm"
             >
               ×
             </button>
@@ -135,7 +138,7 @@ export function GameBoard() {
 
       {/* ヒントリスト */}
       {selectedPlayer ? (
-        <div className="space-y-3">
+        <div className="space-y-3 pt-2">
           {Object.entries(hintsByCategory).map(([category, hints]) => (
             <div key={category} className="bg-white rounded-xl shadow p-3">
               <h3 className="font-bold text-gray-700 text-sm mb-2 border-b pb-1">
@@ -174,7 +177,7 @@ export function GameBoard() {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow p-8 text-center text-gray-500">
+        <div className="bg-white rounded-xl shadow p-8 text-center text-gray-500 mt-2">
           <p className="mb-4">プレイヤーを追加してください</p>
           <button
             onClick={() => setIsAddingPlayer(true)}
@@ -187,7 +190,7 @@ export function GameBoard() {
 
       {/* リセットボタン */}
       {state.players.length > 0 && (
-        <div className="pt-4">
+        <div className="pt-8 pb-4">
           <button
             onClick={handleReset}
             className="w-full py-2 text-red-500 text-sm hover:bg-red-50 rounded-lg transition-colors"
