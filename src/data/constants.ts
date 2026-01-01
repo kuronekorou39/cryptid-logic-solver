@@ -52,7 +52,7 @@ export const STRUCTURE_MAP: Record<StructureColor, StructureInfo> = {
 
 export const ANIMALS: AnimalInfo[] = [
   { type: 'bear', label: 'クマ', emoji: '🐻' },
-  { type: 'cougar', label: 'クーガー', emoji: '🦁' },
+  { type: 'cougar', label: 'ワシ', emoji: '🦅' },
 ];
 
 export const ANIMAL_MAP: Record<AnimalType, AnimalInfo> = {

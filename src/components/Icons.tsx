@@ -10,7 +10,7 @@ export function ForestIcon({ className = "w-4 h-4" }: { className?: string }) {
 export function DesertIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 3C8 3 4 7 4 12c0 3 1.5 5 4 6v2h8v-2c2.5-1 4-3 4-6 0-5-4-9-8-9zm-2 15v-1h4v1h-4zm4-3H10c-1.5-1-2-2.5-2-4 0-3 2-6 4-6s4 3 4 6c0 1.5-.5 3-2 4z" />
+      <path d="M12 2c-1 0-2 1-2 2v4c-2 0-3 1-3 2v1c-2 0-3 1-3 3v8h16v-8c0-2-1-3-3-3v-1c0-1-1-2-3-2V4c0-1-1-2-2-2zm0 2c0 0 0 4 0 4h0c0 0 0-4 0-4zm-2 6h4v1h-4v-1zm-3 3h10v7H7v-7z" />
     </svg>
   )
 }
@@ -48,10 +48,10 @@ export function BearIcon({ className = "w-4 h-4" }: { className?: string }) {
   )
 }
 
-export function CougarIcon({ className = "w-4 h-4" }: { className?: string }) {
+export function EagleIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2L8 6v2L4 10v4l2 2v4h4v-2h4v2h4v-4l2-2v-4l-4-2V6l-4-4zm-2 8a1 1 0 110 2 1 1 0 010-2zm4 0a1 1 0 110 2 1 1 0 010-2zm-2 4l2 1v1h-4v-1l2-1z" />
+      <path d="M12 2L8 6l-4-1 2 4-4 3h5l1 4 4-3 4 3 1-4h5l-4-3 2-4-4 1-4-4zm0 4l2 2-2 1.5L10 8l2-2zm-4 5l2 1-1 2-2-1 1-2zm8 0l1 2-2 1-1-2 2-1z" />
     </svg>
   )
 }
@@ -64,19 +64,42 @@ export function AnimalIcon({ className = "w-4 h-4" }: { className?: string }) {
   )
 }
 
-// 構造物アイコン
-export function StoneIcon({ className = "w-4 h-4" }: { className?: string }) {
+// 構造物アイコン - 緑の巨石
+export function GreenStoneIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2L6 8v12h12V8l-6-6zm0 3l4 4v9H8V9l4-4z" />
+      <circle cx="12" cy="14" r="2" />
     </svg>
   )
 }
 
-export function ShackIcon({ className = "w-4 h-4" }: { className?: string }) {
+// 構造物アイコン - 青の巨石
+export function BlueStoneIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 3.5l5 4.5v7H7v-7l5-4.5zM10 14h4v4h-4v-4z" />
+      <path d="M12 2L6 8v12h12V8l-6-6zm0 3l4 4v9H8V9l4-4z" />
+      <path d="M10 12h4v5h-4z" />
+    </svg>
+  )
+}
+
+// 構造物アイコン - 白の廃墟
+export function WhiteShackIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 3.5l5 4.5v7H7v-7l5-4.5z" />
+      <path d="M10 14h4v4h-4z" />
+    </svg>
+  )
+}
+
+// 構造物アイコン - 黒の廃墟
+export function BlackShackIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 3.5l5 4.5v7H7v-7l5-4.5z" />
+      <path d="M9 13h2v2H9zm4 0h2v2h-2z" />
     </svg>
   )
 }

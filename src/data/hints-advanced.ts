@@ -100,7 +100,7 @@ export const hintsAdvanced: Hint[] = [
   },
   {
     id: 'a-animal-not-cougar',
-    text: 'クーガーの縄張り内にいない',
+    text: 'ワシの縄張り内にいない',
     mode: 'advanced',
     category: 'animal',
     condition: { animals: ['cougar'], range: 0, negated: true },

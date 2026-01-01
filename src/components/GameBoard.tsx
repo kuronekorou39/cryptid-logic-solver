@@ -3,41 +3,90 @@ import { useGame } from '../hooks/useGame'
 import { getHintsByMode, PLAYER_COLOR_MAP, PLAYER_COLORS, PLAYER_COUNT } from '../data'
 import {
   ForestIcon, DesertIcon, SwampIcon, MountainIcon, WaterIcon,
-  BearIcon, CougarIcon, AnimalIcon,
-  StoneIcon, ShackIcon, StructureIcon
+  BearIcon, EagleIcon, AnimalIcon,
+  GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, BlackShackIcon, StructureIcon
 } from './Icons'
-import type { Hint } from '../types'
+import type { Hint, TerrainType, StructureColor, AnimalType } from '../types'
 
-// ヒントからアイコンを取得
-function getHintIcon(hint: Hint) {
+// 地形アイコンマップ
+const terrainIcons: Record<TerrainType, { icon: React.ReactNode; color: string }> = {
+  forest: { icon: <ForestIcon />, color: 'text-green-600' },
+  desert: { icon: <DesertIcon />, color: 'text-yellow-600' },
+  swamp: { icon: <SwampIcon />, color: 'text-purple-600' },
+  mountain: { icon: <MountainIcon />, color: 'text-gray-600' },
+  water: { icon: <WaterIcon />, color: 'text-blue-600' },
+}
+
+// 動物アイコンマップ
+const animalIcons: Record<AnimalType, { icon: React.ReactNode; color: string }> = {
+  bear: { icon: <BearIcon />, color: 'text-amber-700' },
+  cougar: { icon: <EagleIcon />, color: 'text-orange-600' }, // cougar -> ワシ
+}
+
+// 構造物アイコンマップ
+const structureIcons: Record<StructureColor, { icon: React.ReactNode; color: string }> = {
+  white: { icon: <WhiteShackIcon />, color: 'text-gray-500' },
+  black: { icon: <BlackShackIcon />, color: 'text-gray-800' },
+  green: { icon: <GreenStoneIcon />, color: 'text-green-700' },
+  blue: { icon: <BlueStoneIcon />, color: 'text-blue-700' },
+}
+
+// ヒントからアイコン群を取得
+function getHintIcons(hint: Hint): React.ReactNode[] {
   const { condition } = hint
+  const icons: React.ReactNode[] = []
 
   // 地形
   if (condition.terrains) {
-    if (condition.terrains.includes('forest')) return <ForestIcon className="w-4 h-4 text-green-600" />
-    if (condition.terrains.includes('desert')) return <DesertIcon className="w-4 h-4 text-yellow-600" />
-    if (condition.terrains.includes('swamp')) return <SwampIcon className="w-4 h-4 text-purple-600" />
-    if (condition.terrains.includes('mountain')) return <MountainIcon className="w-4 h-4 text-gray-600" />
-    if (condition.terrains.includes('water')) return <WaterIcon className="w-4 h-4 text-blue-600" />
+    condition.terrains.forEach((t, i) => {
+      const info = terrainIcons[t]
+      icons.push(
+        <span key={`terrain-${i}`} className={info.color}>
+          {info.icon}
+        </span>
+      )
+    })
   }
 
   // 動物
   if (condition.animals) {
-    if (condition.animals.includes('bear')) return <BearIcon className="w-4 h-4 text-amber-700" />
-    if (condition.animals.includes('cougar')) return <CougarIcon className="w-4 h-4 text-orange-600" />
+    condition.animals.forEach((a, i) => {
+      const info = animalIcons[a]
+      icons.push(
+        <span key={`animal-${i}`} className={info.color}>
+          {info.icon}
+        </span>
+      )
+    })
   }
-  if (condition.anyAnimal) return <AnimalIcon className="w-4 h-4 text-amber-600" />
+  if (condition.anyAnimal) {
+    icons.push(
+      <span key="any-animal" className="text-amber-600">
+        <AnimalIcon />
+      </span>
+    )
+  }
 
   // 構造物
   if (condition.structureColors) {
-    if (condition.structureColors.includes('white') || condition.structureColors.includes('black')) {
-      return <ShackIcon className="w-4 h-4 text-gray-700" />
-    }
-    return <StoneIcon className="w-4 h-4 text-emerald-700" />
+    condition.structureColors.forEach((c, i) => {
+      const info = structureIcons[c]
+      icons.push(
+        <span key={`structure-${i}`} className={info.color}>
+          {info.icon}
+        </span>
+      )
+    })
   }
-  if (condition.anyStructure) return <StructureIcon className="w-4 h-4 text-gray-600" />
+  if (condition.anyStructure) {
+    icons.push(
+      <span key="any-structure" className="text-gray-600">
+        <StructureIcon />
+      </span>
+    )
+  }
 
-  return null
+  return icons
 }
 
 // タブの薄い背景色を取得
@@ -199,7 +248,7 @@ export function GameBoard() {
               <div className="space-y-0.5">
                 {hints.map((hint) => {
                   const isOn = selectedPlayer.possibleHintIds.includes(hint.id)
-                  const icon = getHintIcon(hint)
+                  const icons = getHintIcons(hint)
                   return (
                     <button
                       key={hint.id}
@@ -221,7 +270,11 @@ export function GameBoard() {
                           }`}
                         />
                       </div>
-                      {icon && <span className={isOn ? '' : 'opacity-40'}>{icon}</span>}
+                      {icons.length > 0 && (
+                        <span className={`flex items-center gap-0.5 ${isOn ? '' : 'opacity-40'}`}>
+                          {icons}
+                        </span>
+                      )}
                       <span className={isOn ? '' : 'line-through'}>{hint.text}</span>
                     </button>
                   )

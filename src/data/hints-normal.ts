@@ -281,31 +281,31 @@ export const hintsNormal: Hint[] = [
     condition: { animals: ['bear'], range: 3 },
   },
 
-  // クーガーの縄張り
+  // ワシの縄張り
   {
     id: 'n-animal-cougar-0',
-    text: 'クーガーの縄張り内にいる',
+    text: 'ワシの縄張り内にいる',
     mode: 'normal',
     category: 'animal',
     condition: { animals: ['cougar'], range: 0 },
   },
   {
     id: 'n-animal-cougar-1',
-    text: 'クーガーの縄張りから1マス以内にいる',
+    text: 'ワシの縄張りから1マス以内にいる',
     mode: 'normal',
     category: 'animal',
     condition: { animals: ['cougar'], range: 1 },
   },
   {
     id: 'n-animal-cougar-2',
-    text: 'クーガーの縄張りから2マス以内にいる',
+    text: 'ワシの縄張りから2マス以内にいる',
     mode: 'normal',
     category: 'animal',
     condition: { animals: ['cougar'], range: 2 },
   },
   {
     id: 'n-animal-cougar-3',
-    text: 'クーガーの縄張りから3マス以内にいる',
+    text: 'ワシの縄張りから3マス以内にいる',
     mode: 'normal',
     category: 'animal',
     condition: { animals: ['cougar'], range: 3 },
