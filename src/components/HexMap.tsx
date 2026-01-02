@@ -53,7 +53,7 @@ function hexToPixel(col: number, row: number): { x: number; y: number } {
 interface CellData {
   col: number;
   row: number;
-  terrain: TerrainType;
+  terrain: TerrainType | null;  // null = 未設定タイル
   animal?: AnimalType;
   structure?: { type: 'stone' | 'shack'; color: StructureColor };
 }
@@ -76,12 +76,28 @@ function generateMapCells(config: MapConfig): CellData[] {
   ];
 
   config.tiles.forEach((tileConfig, posIndex) => {
-    if (tileConfig.tileId === null) return;
+    const pos = tilePositions[posIndex];
+
+    if (tileConfig.tileId === null) {
+      // 未設定タイル: 空のセルを生成
+      for (let tileRow = 0; tileRow < 3; tileRow++) {
+        for (let tileCol = 0; tileCol < 6; tileCol++) {
+          const col = pos.startCol + tileCol;
+          const row = pos.startRow + tileRow;
+          cells.push({
+            col,
+            row,
+            terrain: null,
+          });
+        }
+      }
+      return;
+    }
+
     const baseTile = MAP_TILES[tileConfig.tileId];
     if (!baseTile) return;
 
     const tile = tileConfig.reversed ? rotateTile180(baseTile) : baseTile;
-    const pos = tilePositions[posIndex];
 
     for (let tileRow = 0; tileRow < 3; tileRow++) {
       for (let tileCol = 0; tileCol < 6; tileCol++) {
@@ -181,7 +197,7 @@ function getTileLabels(config: MapConfig): { x: number; y: number; label: string
   config.tiles.forEach((tile, index) => {
     const pos = positions[index];
     const { x, y } = hexToPixel(pos.col, pos.row);
-    const labelText = tile.reversed ? `${tile.tileId}↻` : `${tile.tileId}`;
+    const labelText = tile.tileId === null ? '-' : (tile.reversed ? `${tile.tileId}↻` : `${tile.tileId}`);
     labels.push({ x, y, label: labelText, position: pos.side });
   });
 
@@ -240,6 +256,7 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0 }: 
           const { x, y } = hexToPixel(cell.col, cell.row);
           const cellKey = `${cell.col}-${cell.row}`;
           const isHighlighted = highlightedCells?.has(cellKey);
+          const isEmpty = cell.terrain === null;
 
           return (
             <g
@@ -250,8 +267,8 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0 }: 
               {/* ヘックス本体 */}
               <polygon
                 points={getHexPoints(x, y)}
-                fill={TERRAIN_COLORS[cell.terrain]}
-                stroke={isHighlighted ? '#fbbf24' : '#fff'}
+                fill={isEmpty ? '#e5e7eb' : TERRAIN_COLORS[cell.terrain!]}
+                stroke={isHighlighted ? '#fbbf24' : (isEmpty ? '#d1d5db' : '#fff')}
                 strokeWidth={isHighlighted ? 3 : 1}
                 opacity={isHighlighted === false && highlightedCells ? 0.4 : 1}
               />
@@ -262,7 +279,7 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0 }: 
                 y={y - HEX_SIZE * 0.4}
                 textAnchor="middle"
                 fontSize={8}
-                fill="#fff"
+                fill={isEmpty ? '#9ca3af' : '#fff'}
                 opacity={0.7}
               >
                 {String.fromCharCode(65 + cell.col)}{cell.row + 1}
