@@ -259,15 +259,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
-        const parsed = JSON.parse(saved) as GameState
-        // mapSettingsがない場合はデフォルト値を使用
-        if (!parsed.mapSettings) {
-          parsed.mapSettings = {
-            tiles: DEFAULT_TILES,
-            structureCoords: DEFAULT_STRUCTURE_COORDS,
-          }
-        }
-        return parsed
+        return JSON.parse(saved) as GameState
       }
     } catch {
       // 復元失敗時は初期状態を使用
