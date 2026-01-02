@@ -140,13 +140,17 @@ function StructureInput({
   const [coord, setCoord] = useState('');
 
   const handleAdd = () => {
-    const match = coord.toUpperCase().match(/^([A-R])([1-6])$/);
+    const match = coord.toUpperCase().match(/^([A-L])([1-9])$/);
     if (!match) {
-      alert('座標形式が正しくありません（例: A1, B2）');
+      alert('座標形式が正しくありません（例: A1, L9）');
       return;
     }
     const col = match[1].charCodeAt(0) - 65;
     const row = parseInt(match[2], 10) - 1;
+    if (col > 11 || row > 8) {
+      alert('座標が範囲外です（A-L, 1-9）');
+      return;
+    }
     onAdd({ type, color, col, row });
     setCoord('');
   };

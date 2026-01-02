@@ -200,16 +200,20 @@ export interface MapConfig {
 }
 
 /**
- * デフォルトのマップ設定（画像の配置）
+ * デフォルトのマップ設定
+ * タイル配置: 2列 × 3行
+ * [位置0, 位置1]  上段
+ * [位置2, 位置3]  中段
+ * [位置4, 位置5]  下段
  */
 export const DEFAULT_MAP_CONFIG: MapConfig = {
   tiles: [
-    { tileId: 5, reversed: true },  // 上段左
-    { tileId: 3, reversed: true },  // 上段中
-    { tileId: 6, reversed: true },  // 上段右
-    { tileId: 4, reversed: true },  // 下段左
-    { tileId: 2, reversed: false }, // 下段中
-    { tileId: 1, reversed: false }, // 下段右
+    { tileId: 1, reversed: false }, // 位置0: 上段左
+    { tileId: 2, reversed: false }, // 位置1: 上段右
+    { tileId: 3, reversed: false }, // 位置2: 中段左
+    { tileId: 4, reversed: false }, // 位置3: 中段右
+    { tileId: 5, reversed: false }, // 位置4: 下段左
+    { tileId: 6, reversed: false }, // 位置5: 下段右
   ],
-  structures: [], // TODO: 構造物配置を追加
+  structures: [],
 };

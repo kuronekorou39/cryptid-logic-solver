@@ -25,15 +25,15 @@ interface HexMapProps {
   onCellClick?: (col: number, row: number) => void;
 }
 
-// ヘックスのサイズ
-const HEX_SIZE = 24;
-const HEX_HEIGHT = Math.sqrt(3) * HEX_SIZE;
+// ヘックスのサイズ（pointy-top）
+const HEX_SIZE = 20;
+const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
 
-// ヘックスの頂点を計算（flat-top hexagon）
+// ヘックスの頂点を計算（pointy-top hexagon）
 function getHexPoints(cx: number, cy: number): string {
   const points: string[] = [];
   for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i;
+    const angle = (Math.PI / 3) * i - Math.PI / 6; // -30° offset for pointy-top
     const x = cx + HEX_SIZE * Math.cos(angle);
     const y = cy + HEX_SIZE * Math.sin(angle);
     points.push(`${x},${y}`);
@@ -41,10 +41,10 @@ function getHexPoints(cx: number, cy: number): string {
   return points.join(' ');
 }
 
-// グリッド座標からピクセル座標へ変換（flat-top offset coordinates）
+// グリッド座標からピクセル座標へ変換（pointy-top offset coordinates, odd-r）
 function hexToPixel(col: number, row: number): { x: number; y: number } {
-  const x = col * HEX_SIZE * 1.5 + HEX_SIZE + 10;
-  const y = row * HEX_HEIGHT + (col % 2 === 1 ? HEX_HEIGHT / 2 : 0) + HEX_HEIGHT / 2 + 10;
+  const x = col * HEX_WIDTH + (row % 2 === 1 ? HEX_WIDTH / 2 : 0) + HEX_WIDTH / 2 + 30;
+  const y = row * HEX_SIZE * 1.5 + HEX_SIZE + 10;
   return { x, y };
 }
 
@@ -60,15 +60,18 @@ interface CellData {
 function generateMapCells(config: MapConfig): CellData[] {
   const cells: CellData[] = [];
 
-  // タイル配置: [上段左, 上段中, 上段右, 下段左, 下段中, 下段右]
-  // 各タイルは6列×3行
+  // タイル配置: 2列 × 3行 = 6タイル
+  // [位置0, 位置1]  上段
+  // [位置2, 位置3]  中段
+  // [位置4, 位置5]  下段
+  // 各タイルは6列×3行、全体で12列×9行
   const tilePositions = [
     { startCol: 0, startRow: 0 },   // 位置0: 上段左
-    { startCol: 6, startRow: 0 },   // 位置1: 上段中
-    { startCol: 12, startRow: 0 },  // 位置2: 上段右
-    { startCol: 0, startRow: 3 },   // 位置3: 下段左
-    { startCol: 6, startRow: 3 },   // 位置4: 下段中
-    { startCol: 12, startRow: 3 },  // 位置5: 下段右
+    { startCol: 6, startRow: 0 },   // 位置1: 上段右
+    { startCol: 0, startRow: 3 },   // 位置2: 中段左
+    { startCol: 6, startRow: 3 },   // 位置3: 中段右
+    { startCol: 0, startRow: 6 },   // 位置4: 下段左
+    { startCol: 6, startRow: 6 },   // 位置5: 下段右
   ];
 
   config.tiles.forEach((tileConfig, posIndex) => {
@@ -158,21 +161,65 @@ function StructureMarker({
   }
 }
 
+// タイル番号ラベルの位置（セットアップカード風）
+function getTileLabels(config: MapConfig): { x: number; y: number; label: string; position: string }[] {
+  const labels: { x: number; y: number; label: string; position: string }[] = [];
+
+  // タイル位置: [上段左, 上段右, 中段左, 中段右, 下段左, 下段右]
+  // 左側のタイル（位置0,2,4）のラベルは左に、右側のタイル（位置1,3,5）のラベルは右に
+  const positions = [
+    { col: -1, row: 1, side: 'left' },   // 位置0: 上段左
+    { col: 12, row: 1, side: 'right' },  // 位置1: 上段右
+    { col: -1, row: 4, side: 'left' },   // 位置2: 中段左
+    { col: 12, row: 4, side: 'right' },  // 位置3: 中段右
+    { col: -1, row: 7, side: 'left' },   // 位置4: 下段左
+    { col: 12, row: 7, side: 'right' },  // 位置5: 下段右
+  ];
+
+  config.tiles.forEach((tile, index) => {
+    const pos = positions[index];
+    const { x, y } = hexToPixel(pos.col, pos.row);
+    const labelText = tile.reversed ? `${tile.tileId}↻` : `${tile.tileId}`;
+    labels.push({ x, y, label: labelText, position: pos.side });
+  });
+
+  return labels;
+}
+
 export function HexMap({ config, highlightedCells, onCellClick }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
+  const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
-  // マップサイズ計算
-  const maxCol = Math.max(...cells.map((c) => c.col));
-  const maxRow = Math.max(...cells.map((c) => c.row));
-  const svgWidth = (maxCol + 1) * HEX_SIZE * 1.5 + HEX_SIZE + 20;
-  const svgHeight = (maxRow + 1) * HEX_HEIGHT + HEX_HEIGHT / 2 + 20;
+  // マップサイズ計算（12列×9行 + 余白）
+  const svgWidth = 12 * HEX_WIDTH + HEX_WIDTH + 60;
+  const svgHeight = 9 * HEX_SIZE * 1.5 + HEX_SIZE + 20;
 
   return (
     <svg
       width="100%"
       viewBox={`0 0 ${svgWidth} ${svgHeight}`}
       className="max-w-full"
+      style={{ background: '#1f2937' }}
     >
+      {/* 背景 */}
+      <rect x="25" y="5" width={svgWidth - 50} height={svgHeight - 10} fill="#f5f5dc" rx="8" />
+
+      {/* タイル番号ラベル */}
+      {tileLabels.map((label, i) => (
+        <text
+          key={i}
+          x={label.position === 'left' ? 15 : svgWidth - 15}
+          y={label.y}
+          textAnchor="middle"
+          fontSize={14}
+          fontWeight="bold"
+          fill="#fff"
+        >
+          {label.label}
+        </text>
+      ))}
+
+      {/* ヘックスセル */}
       {cells.map((cell) => {
         const { x, y } = hexToPixel(cell.col, cell.row);
         const cellKey = `${cell.col}-${cell.row}`;
@@ -224,17 +271,17 @@ export function HexMap({ config, highlightedCells, onCellClick }: HexMapProps) {
   );
 }
 
-// 座標ラベルを取得
+// 座標ラベルを取得 (A-L, 1-9)
 export function getCellLabel(col: number, row: number): string {
   return `${String.fromCharCode(65 + col)}${row + 1}`;
 }
 
 // ラベルから座標を取得
 export function parseCellLabel(label: string): { col: number; row: number } | null {
-  const match = label.match(/^([A-R])([1-6])$/i);
+  const match = label.match(/^([A-L])([1-9])$/i);
   if (!match) return null;
-  return {
-    col: match[1].toUpperCase().charCodeAt(0) - 65,
-    row: parseInt(match[2], 10) - 1,
-  };
+  const col = match[1].toUpperCase().charCodeAt(0) - 65;
+  const row = parseInt(match[2], 10) - 1;
+  if (col > 11 || row > 8) return null;
+  return { col, row };
 }
