@@ -277,7 +277,7 @@ export function MapView() {
             })}
           </div>
           <button
-            onClick={() => setShowStones(false)}
+            onClick={() => { setShowStones(false); setSelectedStructure(null); }}
             className="w-full mt-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition-colors"
           >
             OK
@@ -351,7 +351,7 @@ export function MapView() {
             })}
           </div>
           <button
-            onClick={() => setShowShacks(false)}
+            onClick={() => { setShowShacks(false); setSelectedStructure(null); }}
             className="w-full mt-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition-colors"
           >
             OK
