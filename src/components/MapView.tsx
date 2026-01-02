@@ -123,7 +123,8 @@ export function MapView() {
                     >
                       <span className={colorClass[s.color]}>{icon}</span>
                       <span className={colorClass[s.color]}>{colorLabel[s.color]}</span>
-                      <span>{String.fromCharCode(65 + s.col)}{s.row + 1}</span>
+                      <span>{s.type === 'stone' ? '巨石' : '廃墟'}</span>
+                      <span className="text-gray-500">{String.fromCharCode(65 + s.col)}{s.row + 1}</span>
                       <button
                         onClick={() => removeStructure(s.col, s.row)}
                         className="text-red-500 hover:text-red-700"
