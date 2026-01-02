@@ -45,12 +45,20 @@ export function MapView() {
     );
   };
 
-  // 構造物の座標を更新
+  // 構造物の座標を更新（同じマスの他の構造物はクリア）
   const updateStructureCoord = (id: string, col: number, row: number) => {
-    setStructureCoords((prev) => ({
-      ...prev,
-      [id]: { col, row },
-    }));
+    setStructureCoords((prev) => {
+      const newCoords = { ...prev };
+      // 同じ座標の他の構造物をクリア
+      Object.keys(newCoords).forEach((key) => {
+        if (key !== id && newCoords[key]?.col === col && newCoords[key]?.row === row) {
+          newCoords[key] = null;
+        }
+      });
+      // 対象の構造物を更新
+      newCoords[id] = { col, row };
+      return newCoords;
+    });
   };
 
   // 構造物の座標をクリア
@@ -97,7 +105,7 @@ export function MapView() {
   const rows = Array.from({ length: 9 }, (_, i) => i + 1);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 select-none">
       {/* 設定トグル */}
       <button
         onClick={() => setShowSetup(!showSetup)}
