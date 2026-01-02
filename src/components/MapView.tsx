@@ -100,21 +100,39 @@ export function MapView() {
             <StructureInput onAdd={addStructure} />
             {mapConfig.structures.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {mapConfig.structures.map((s, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs"
-                  >
-                    {s.type === 'stone' ? '巨石' : '廃墟'}({s.color})
-                    @{String.fromCharCode(65 + s.col)}{s.row + 1}
-                    <button
-                      onClick={() => removeStructure(s.col, s.row)}
-                      className="text-red-500 hover:text-red-700"
+                {mapConfig.structures.map((s, i) => {
+                  const colorClass: Record<string, string> = {
+                    green: 'text-green-600',
+                    blue: 'text-blue-600',
+                    white: 'text-gray-400',
+                    black: 'text-gray-800',
+                  };
+                  const colorLabel: Record<string, string> = {
+                    green: '緑',
+                    blue: '青',
+                    white: '白',
+                    black: '黒',
+                  };
+                  const icon = s.type === 'stone'
+                    ? (s.color === 'blue' ? <BlueStoneIcon /> : <GreenStoneIcon />)
+                    : (s.color === 'black' ? <BlackShackIcon /> : <WhiteShackIcon />);
+                  return (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs"
                     >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                      <span className={colorClass[s.color]}>{icon}</span>
+                      <span className={colorClass[s.color]}>{colorLabel[s.color]}</span>
+                      <span>{String.fromCharCode(65 + s.col)}{s.row + 1}</span>
+                      <button
+                        onClick={() => removeStructure(s.col, s.row)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>
