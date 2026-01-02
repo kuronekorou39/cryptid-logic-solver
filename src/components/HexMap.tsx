@@ -140,7 +140,8 @@ function getInnerHexPoints(cx: number, cy: number, size: number): string {
 
 // 動物縄張りマーカー（内側六角形）
 function AnimalMarker({ animal, x, y }: { animal: AnimalType; x: number; y: number }) {
-  const color = animal === 'bear' ? '#92400e' : '#ea580c'; // amber-800 / orange-600
+  // クマ: 茶色、ワシ: 赤（明確に区別）
+  const color = animal === 'bear' ? '#92400e' : '#dc2626'; // amber-800 / red-600
   const innerSize = HEX_SIZE * 0.6; // 外側の60%サイズ
   return (
     <polygon
