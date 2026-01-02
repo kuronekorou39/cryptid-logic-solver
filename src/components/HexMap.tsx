@@ -25,15 +25,15 @@ interface HexMapProps {
   onCellClick?: (col: number, row: number) => void;
 }
 
-// ヘックスのサイズ（pointy-top）
+// ヘックスのサイズ（flat-top）
 const HEX_SIZE = 20;
-const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
+const HEX_HEIGHT = Math.sqrt(3) * HEX_SIZE;
 
-// ヘックスの頂点を計算（pointy-top hexagon）
+// ヘックスの頂点を計算（flat-top hexagon）
 function getHexPoints(cx: number, cy: number): string {
   const points: string[] = [];
   for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i - Math.PI / 6; // -30° offset for pointy-top
+    const angle = (Math.PI / 3) * i; // flat-top: 0°から開始
     const x = cx + HEX_SIZE * Math.cos(angle);
     const y = cy + HEX_SIZE * Math.sin(angle);
     points.push(`${x},${y}`);
@@ -41,10 +41,10 @@ function getHexPoints(cx: number, cy: number): string {
   return points.join(' ');
 }
 
-// グリッド座標からピクセル座標へ変換（pointy-top offset coordinates, odd-r）
+// グリッド座標からピクセル座標へ変換（flat-top offset coordinates, odd-q）
 function hexToPixel(col: number, row: number): { x: number; y: number } {
-  const x = col * HEX_WIDTH + (row % 2 === 1 ? HEX_WIDTH / 2 : 0) + HEX_WIDTH / 2 + 30;
-  const y = row * HEX_SIZE * 1.5 + HEX_SIZE + 10;
+  const x = col * HEX_SIZE * 1.5 + HEX_SIZE + 30;
+  const y = row * HEX_HEIGHT + (col % 2 === 1 ? HEX_HEIGHT / 2 : 0) + HEX_HEIGHT / 2 + 10;
   return { x, y };
 }
 
@@ -190,9 +190,9 @@ export function HexMap({ config, highlightedCells, onCellClick }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
-  // マップサイズ計算（12列×9行 + 余白）
-  const svgWidth = 12 * HEX_WIDTH + HEX_WIDTH + 60;
-  const svgHeight = 9 * HEX_SIZE * 1.5 + HEX_SIZE + 20;
+  // マップサイズ計算（12列×9行 + 余白）flat-top
+  const svgWidth = 12 * HEX_SIZE * 1.5 + HEX_SIZE * 0.5 + 60;
+  const svgHeight = 9 * HEX_HEIGHT + HEX_HEIGHT / 2 + 20;
 
   return (
     <svg
