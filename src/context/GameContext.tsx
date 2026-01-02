@@ -17,7 +17,7 @@ type GameReducerAction =
   | { type: 'TOGGLE_HINT'; payload: { playerId: string; hintId: string } }
   | { type: 'RESET_GAME' }
   | { type: 'LOAD_STATE'; payload: GameState }
-  | { type: 'SET_TILES'; payload: TileConfig[] }
+  | { type: 'SET_TILES'; payload: { tiles: TileConfig[]; changedIndex: number } }
   | { type: 'SET_STRUCTURE_COORD'; payload: { id: string; coord: StructureCoord | null } }
 
 // ========================================
@@ -219,30 +219,18 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
       return action.payload
 
     case 'SET_TILES': {
-      // 重複するタイル番号をクリア
-      const newTiles = action.payload.map((tile, index) => {
-        if (tile.tileId === null) return tile
-        // 同じタイル番号が他の位置にあればクリア
-        const duplicate = action.payload.findIndex(
-          (t, i) => i !== index && t.tileId === tile.tileId
-        )
-        if (duplicate !== -1 && duplicate < index) {
-          // 先に設定されていた方を優先し、後から設定した方は残す
-          return tile
-        }
-        return tile
-      })
-      // 重複している古い方をクリア
-      const cleanedTiles = newTiles.map((tile, index) => {
-        if (tile.tileId === null) return tile
-        const laterDuplicate = newTiles.findIndex(
-          (t, i) => i > index && t.tileId === tile.tileId
-        )
-        if (laterDuplicate !== -1) {
+      const { tiles, changedIndex } = action.payload
+      const changedTileId = tiles[changedIndex].tileId
+
+      // 変更されたインデックス以外で同じタイルIDを持つものをクリア
+      const cleanedTiles = tiles.map((tile, index) => {
+        if (index === changedIndex) return tile
+        if (tile.tileId !== null && tile.tileId === changedTileId) {
           return { ...tile, tileId: null }
         }
         return tile
       })
+
       return {
         ...state,
         mapSettings: {
@@ -301,7 +289,7 @@ interface GameContextValue {
   toggleHint: (playerId: string, hintId: string) => void
   resetGame: () => void
   // Map settings
-  setTiles: (tiles: TileConfig[]) => void
+  setTiles: (tiles: TileConfig[], changedIndex: number) => void
   setStructureCoord: (id: string, coord: StructureCoord | null) => void
 }
 
@@ -360,7 +348,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     undoAction: () => dispatch({ type: 'UNDO_ACTION' }),
     toggleHint: (playerId, hintId) => dispatch({ type: 'TOGGLE_HINT', payload: { playerId, hintId } }),
     resetGame: () => dispatch({ type: 'RESET_GAME' }),
-    setTiles: (tiles) => dispatch({ type: 'SET_TILES', payload: tiles }),
+    setTiles: (tiles, changedIndex) => dispatch({ type: 'SET_TILES', payload: { tiles, changedIndex } }),
     setStructureCoord: (id, coord) => dispatch({ type: 'SET_STRUCTURE_COORD', payload: { id, coord } }),
   }
 

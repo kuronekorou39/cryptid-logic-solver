@@ -54,7 +54,7 @@ export function MapView() {
   // タイル設定を更新
   const updateTile = (index: number, tileId: number | null, reversed: boolean) => {
     const newTiles = tileConfig.map((t, i) => (i === index ? { tileId, reversed } : t));
-    setTiles(newTiles);
+    setTiles(newTiles, index);
   };
 
   // 構造物の座標を更新
