@@ -1,67 +1,92 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { HexMap } from './HexMap';
 import { DEFAULT_MAP_CONFIG, type MapConfig } from '../data/map-tiles';
 import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, BlackShackIcon } from './Icons';
 import type { StructureColor } from '../types';
 
-// 構造物配置の入力用
-interface StructurePlacement {
-  type: 'stone' | 'shack';
-  color: StructureColor;
-  col: number;
-  row: number;
-}
+// 4つの構造物定義
+const STRUCTURE_DEFS = [
+  { id: 'stone-green', type: 'stone' as const, color: 'green' as StructureColor, label: '巨石', colorLabel: '緑', icon: GreenStoneIcon, colorClass: 'text-green-600' },
+  { id: 'stone-blue', type: 'stone' as const, color: 'blue' as StructureColor, label: '巨石', colorLabel: '青', icon: BlueStoneIcon, colorClass: 'text-blue-600' },
+  { id: 'shack-white', type: 'shack' as const, color: 'white' as StructureColor, label: '廃墟', colorLabel: '白', icon: WhiteShackIcon, colorClass: 'text-gray-400' },
+  { id: 'shack-black', type: 'shack' as const, color: 'black' as StructureColor, label: '廃墟', colorLabel: '黒', icon: BlackShackIcon, colorClass: 'text-gray-800' },
+];
+
+// 座標の型（未設定はnull）
+type Coord = { col: number; row: number } | null;
 
 export function MapView() {
-  const [mapConfig, setMapConfig] = useState<MapConfig>({
-    ...DEFAULT_MAP_CONFIG,
-    structures: [],
-  });
-
+  const [tileConfig, setTileConfig] = useState(DEFAULT_MAP_CONFIG.tiles);
   const [showSetup, setShowSetup] = useState(true);
 
-  // 構造物入力用の座標（マップクリックで更新可能）
-  const [inputCol, setInputCol] = useState(0);
-  const [inputRow, setInputRow] = useState(0);
+  // 各構造物の座標を個別に管理
+  const [structureCoords, setStructureCoords] = useState<Record<string, Coord>>({
+    'stone-green': null,
+    'stone-blue': null,
+    'shack-white': null,
+    'shack-black': null,
+  });
 
-  // マップクリック時のハンドラ
-  const handleCellClick = (col: number, row: number) => {
-    setInputCol(col);
-    setInputRow(row);
-  };
-
-  // ハイライトするセル
-  const highlightedCells = new Set([`${inputCol}-${inputRow}`]);
+  // 現在選択中の構造物（マップクリックで座標を設定する対象）
+  const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
 
   // タイル設定を更新
   const updateTile = (index: number, tileId: number, reversed: boolean) => {
-    setMapConfig((prev) => ({
+    setTileConfig((prev) =>
+      prev.map((t, i) => (i === index ? { tileId, reversed } : t))
+    );
+  };
+
+  // 構造物の座標を更新
+  const updateStructureCoord = (id: string, col: number, row: number) => {
+    setStructureCoords((prev) => ({
       ...prev,
-      tiles: prev.tiles.map((t, i) =>
-        i === index ? { tileId, reversed } : t
-      ),
+      [id]: { col, row },
     }));
   };
 
-  // 構造物を追加
-  const addStructure = (structure: StructurePlacement) => {
-    setMapConfig((prev) => ({
+  // 構造物の座標をクリア
+  const clearStructureCoord = (id: string) => {
+    setStructureCoords((prev) => ({
       ...prev,
-      structures: [...prev.structures.filter(
-        (s) => !(s.col === structure.col && s.row === structure.row)
-      ), structure],
+      [id]: null,
     }));
   };
 
-  // 構造物を削除
-  const removeStructure = (col: number, row: number) => {
-    setMapConfig((prev) => ({
-      ...prev,
-      structures: prev.structures.filter(
-        (s) => !(s.col === col && s.row === row)
-      ),
-    }));
+  // マップクリック時のハンドラ
+  const handleCellClick = (col: number, row: number) => {
+    if (selectedStructure) {
+      updateStructureCoord(selectedStructure, col, row);
+    }
   };
+
+  // mapConfigを構築
+  const mapConfig: MapConfig = useMemo(() => {
+    const structures = STRUCTURE_DEFS
+      .filter((def) => structureCoords[def.id] !== null)
+      .map((def) => ({
+        type: def.type,
+        color: def.color,
+        col: structureCoords[def.id]!.col,
+        row: structureCoords[def.id]!.row,
+      }));
+
+    return {
+      tiles: tileConfig,
+      structures,
+    };
+  }, [tileConfig, structureCoords]);
+
+  // ハイライトするセル（選択中の構造物の座標）
+  const highlightedCells = useMemo(() => {
+    if (!selectedStructure) return undefined;
+    const coord = structureCoords[selectedStructure];
+    if (!coord) return undefined;
+    return new Set([`${coord.col}-${coord.row}`]);
+  }, [selectedStructure, structureCoords]);
+
+  const columns = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
+  const rows = Array.from({ length: 9 }, (_, i) => i + 1);
 
   return (
     <div className="space-y-4">
@@ -78,7 +103,7 @@ export function MapView() {
         <div className="bg-white rounded-xl shadow p-4 space-y-4">
           <h3 className="font-bold text-gray-700">タイル配置</h3>
           <div className="grid grid-cols-2 gap-1">
-            {mapConfig.tiles.map((tile, index) => (
+            {tileConfig.map((tile, index) => (
               <div key={index} className="flex items-center justify-center gap-2 text-sm bg-gray-50 rounded p-1.5">
                 <select
                   value={tile.tileId}
@@ -110,51 +135,68 @@ export function MapView() {
           {/* 構造物配置 */}
           <div>
             <h4 className="font-medium text-gray-600 text-sm mb-2">構造物</h4>
-            <StructureInput
-              onAdd={addStructure}
-              col={inputCol}
-              row={inputRow}
-              onColChange={setInputCol}
-              onRowChange={setInputRow}
-            />
-            {mapConfig.structures.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {mapConfig.structures.map((s, i) => {
-                  const colorClass: Record<string, string> = {
-                    green: 'text-green-600',
-                    blue: 'text-blue-600',
-                    white: 'text-gray-400',
-                    black: 'text-gray-800',
-                  };
-                  const colorLabel: Record<string, string> = {
-                    green: '緑',
-                    blue: '青',
-                    white: '白',
-                    black: '黒',
-                  };
-                  const icon = s.type === 'stone'
-                    ? (s.color === 'blue' ? <BlueStoneIcon /> : <GreenStoneIcon />)
-                    : (s.color === 'black' ? <BlackShackIcon /> : <WhiteShackIcon />);
-                  return (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs"
-                    >
-                      <span className={colorClass[s.color]}>{icon}</span>
-                      <span>{s.type === 'stone' ? '巨石' : '廃墟'}</span>
-                      <span className={colorClass[s.color]}>{colorLabel[s.color]}</span>
-                      <span className="text-gray-500">{String.fromCharCode(65 + s.col)}{s.row + 1}</span>
-                      <button
-                        onClick={() => removeStructure(s.col, s.row)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        ×
-                      </button>
+            <div className="space-y-1">
+              {STRUCTURE_DEFS.map((def) => {
+                const coord = structureCoords[def.id];
+                const isSelected = selectedStructure === def.id;
+                const Icon = def.icon;
+
+                return (
+                  <div
+                    key={def.id}
+                    className={`flex items-center gap-2 text-sm p-1.5 rounded cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-amber-100 ring-2 ring-amber-400'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setSelectedStructure(isSelected ? null : def.id)}
+                  >
+                    <span className={def.colorClass}>
+                      <Icon className="w-5 h-5" />
                     </span>
-                  );
-                })}
-              </div>
-            )}
+                    <span className="w-8">{def.label}</span>
+                    <span className={`w-4 ${def.colorClass}`}>{def.colorLabel}</span>
+
+                    {/* 座標選択 */}
+                    <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                      {coord ? (
+                        <>
+                          <select
+                            value={coord.col}
+                            onChange={(e) => updateStructureCoord(def.id, parseInt(e.target.value), coord.row)}
+                            className="border rounded px-1 py-0.5 w-11 text-xs"
+                          >
+                            {columns.map((c, i) => (
+                              <option key={c} value={i}>{c}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={coord.row}
+                            onChange={(e) => updateStructureCoord(def.id, coord.col, parseInt(e.target.value))}
+                            className="border rounded px-1 py-0.5 w-11 text-xs"
+                          >
+                            {rows.map((r) => (
+                              <option key={r} value={r - 1}>{r}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => clearStructureCoord(def.id)}
+                            className="text-red-500 hover:text-red-700 px-1"
+                          >
+                            ×
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 text-xs">マップをクリック</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              行をクリックして選択→マップ上のマスをクリックで座標設定
+            </p>
           </div>
         </div>
       )}
@@ -167,105 +209,6 @@ export function MapView() {
           onCellClick={handleCellClick}
         />
       </div>
-    </div>
-  );
-}
-
-// 構造物入力フォーム
-function StructureInput({
-  onAdd,
-  col,
-  row,
-  onColChange,
-  onRowChange,
-}: {
-  onAdd: (structure: StructurePlacement) => void;
-  col: number;
-  row: number;
-  onColChange: (col: number) => void;
-  onRowChange: (row: number) => void;
-}) {
-  const [type, setType] = useState<'stone' | 'shack'>('stone');
-  const [color, setColor] = useState<StructureColor>('green');
-
-  const handleAdd = () => {
-    onAdd({ type, color, col, row });
-  };
-
-  const columns = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i)); // A-L
-  const rows = Array.from({ length: 9 }, (_, i) => i + 1); // 1-9
-
-  // アイコンと色のマッピング
-  const getIcon = () => {
-    if (type === 'stone') {
-      return color === 'blue' ? <BlueStoneIcon /> : <GreenStoneIcon />;
-    } else {
-      return color === 'black' ? <BlackShackIcon /> : <WhiteShackIcon />;
-    }
-  };
-
-  const colorClass: Record<StructureColor, string> = {
-    green: 'text-green-600',
-    blue: 'text-blue-600',
-    white: 'text-gray-400',
-    black: 'text-gray-800',
-  };
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      {/* 選択中のアイコン表示 */}
-      <span className={`${colorClass[color]}`}>{getIcon()}</span>
-
-      {/* タイプ選択 */}
-      <select
-        value={type}
-        onChange={(e) => setType(e.target.value as 'stone' | 'shack')}
-        className="border rounded px-2 py-1"
-      >
-        <option value="stone">巨石</option>
-        <option value="shack">廃墟</option>
-      </select>
-
-      {/* 色選択 */}
-      <select
-        value={color}
-        onChange={(e) => setColor(e.target.value as StructureColor)}
-        className={`border rounded px-2 py-1 font-medium ${colorClass[color]}`}
-      >
-        <option value="green" className="text-green-600">緑</option>
-        <option value="blue" className="text-blue-600">青</option>
-        <option value="white" className="text-gray-400">白</option>
-        <option value="black" className="text-gray-800">黒</option>
-      </select>
-
-      {/* 座標選択 */}
-      <div className="flex items-center gap-1">
-        <select
-          value={col}
-          onChange={(e) => onColChange(parseInt(e.target.value))}
-          className="border rounded px-1.5 py-1 w-12"
-        >
-          {columns.map((c, i) => (
-            <option key={c} value={i}>{c}</option>
-          ))}
-        </select>
-        <select
-          value={row}
-          onChange={(e) => onRowChange(parseInt(e.target.value))}
-          className="border rounded px-1.5 py-1 w-12"
-        >
-          {rows.map((r) => (
-            <option key={r} value={r - 1}>{r}</option>
-          ))}
-        </select>
-      </div>
-
-      <button
-        onClick={handleAdd}
-        className="px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600"
-      >
-        追加
-      </button>
     </div>
   );
 }
