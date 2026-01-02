@@ -240,7 +240,7 @@ export function MapView() {
                   <span className={`w-4 ${def.colorClass}`}>{def.colorLabel}</span>
 
                   {/* 座標選択 */}
-                  <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1 ml-auto" onClick={coord ? (e) => e.stopPropagation() : undefined}>
                     {coord ? (
                       <>
                         <select
@@ -314,7 +314,7 @@ export function MapView() {
                   <span className={`w-4 ${def.colorClass}`}>{def.colorLabel}</span>
 
                   {/* 座標選択 */}
-                  <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1 ml-auto" onClick={coord ? (e) => e.stopPropagation() : undefined}>
                     {coord ? (
                       <>
                         <select
