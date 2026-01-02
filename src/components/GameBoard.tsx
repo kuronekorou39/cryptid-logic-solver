@@ -167,16 +167,24 @@ export function GameBoard() {
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [activeFilters, setActiveFilters] = useState<{ type: FilterType; value: FilterValue }[]>([])
+  const [hideOffItems, setHideOffItems] = useState(false)
 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
 
   // フィルター適用
-  const filteredHints = activeFilters.length === 0
+  let filteredHints = activeFilters.length === 0
     ? allHints
     : allHints.filter((hint) =>
         activeFilters.every((f) => hintMatchesFilter(hint, f.type, f.value))
       )
+
+  // OFFの項目を非表示
+  if (hideOffItems && selectedPlayer) {
+    filteredHints = filteredHints.filter((hint) =>
+      selectedPlayer.possibleHintIds.includes(hint.id)
+    )
+  }
 
   // フィルターのトグル
   const toggleFilter = (type: FilterType, value: FilterValue) => {
@@ -444,9 +452,25 @@ export function GameBoard() {
               )
             })}
           </div>
-          {activeFilters.length > 0 && (
+          {/* OFF非表示トグル */}
+          <div className="mt-3 pt-2 border-t border-gray-200 flex items-center justify-between">
+            <span className="text-xs text-gray-500">OFFを非表示</span>
+            <button
+              onClick={() => setHideOffItems(!hideOffItems)}
+              className={`w-10 h-5 rounded-full relative transition-colors ${
+                hideOffItems ? 'bg-emerald-500' : 'bg-gray-300'
+              }`}
+            >
+              <div
+                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  hideOffItems ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+          {(activeFilters.length > 0 || hideOffItems) && (
             <div className="mt-2 text-xs text-gray-500">
-              {filteredHints.length}件のヒントが該当
+              {filteredHints.length}件のヒントを表示中
             </div>
           )}
         </div>
