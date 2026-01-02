@@ -157,7 +157,7 @@ export const hintsNormal: Hint[] = [
   },
 
   // ========================================
-  // 指定の色の建造物から3マス以内（4種類）
+  // 指定の色の建造物から3マス以内（3種類）※黒は上級のみ
   // ========================================
   {
     id: 'n-structure-blue-3',
@@ -179,13 +179,6 @@ export const hintsNormal: Hint[] = [
     mode: 'normal',
     category: 'structure',
     condition: { structureColors: ['green'], range: 3 },
-  },
-  {
-    id: 'n-structure-black-3',
-    text: '黒の建造物から3マス以内にいる',
-    mode: 'normal',
-    category: 'structure',
-    condition: { structureColors: ['black'], range: 3 },
   },
 ];
 
