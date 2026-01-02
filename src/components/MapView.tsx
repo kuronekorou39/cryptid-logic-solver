@@ -138,12 +138,6 @@ function StructureInput({
   const [col, setCol] = useState(0);
   const [row, setRow] = useState(0);
 
-  // タイプ変更時に色をリセット
-  const handleTypeChange = (newType: 'stone' | 'shack') => {
-    setType(newType);
-    setColor(newType === 'stone' ? 'green' : 'white');
-  };
-
   const handleAdd = () => {
     onAdd({ type, color, col, row });
   };
@@ -151,84 +145,77 @@ function StructureInput({
   const columns = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i)); // A-L
   const rows = Array.from({ length: 9 }, (_, i) => i + 1); // 1-9
 
-  const stoneColors = [
-    { value: 'green' as StructureColor, label: '緑', icon: <GreenStoneIcon />, colorClass: 'text-green-600' },
-    { value: 'blue' as StructureColor, label: '青', icon: <BlueStoneIcon />, colorClass: 'text-blue-600' },
-  ];
-  const shackColors = [
-    { value: 'white' as StructureColor, label: '白', icon: <WhiteShackIcon />, colorClass: 'text-gray-400' },
-    { value: 'black' as StructureColor, label: '黒', icon: <BlackShackIcon />, colorClass: 'text-gray-800' },
-  ];
+  // アイコンと色のマッピング
+  const getIcon = () => {
+    if (type === 'stone') {
+      return color === 'blue' ? <BlueStoneIcon /> : <GreenStoneIcon />;
+    } else {
+      return color === 'black' ? <BlackShackIcon /> : <WhiteShackIcon />;
+    }
+  };
 
-  const colorOptions = type === 'stone' ? stoneColors : shackColors;
+  const colorClass: Record<StructureColor, string> = {
+    green: 'text-green-600',
+    blue: 'text-blue-600',
+    white: 'text-gray-400',
+    black: 'text-gray-800',
+  };
 
   return (
-    <div className="space-y-2 text-sm">
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      {/* 選択中のアイコン表示 */}
+      <span className={`${colorClass[color]}`}>{getIcon()}</span>
+
       {/* タイプ選択 */}
-      <div className="flex gap-1">
-        <button
-          onClick={() => handleTypeChange('stone')}
-          className={`flex items-center gap-1 px-2 py-1 rounded border ${
-            type === 'stone' ? 'bg-emerald-100 border-emerald-500' : 'bg-white border-gray-300'
-          }`}
+      <select
+        value={type}
+        onChange={(e) => setType(e.target.value as 'stone' | 'shack')}
+        className="border rounded px-2 py-1"
+      >
+        <option value="stone">巨石</option>
+        <option value="shack">廃墟</option>
+      </select>
+
+      {/* 色選択 */}
+      <select
+        value={color}
+        onChange={(e) => setColor(e.target.value as StructureColor)}
+        className={`border rounded px-2 py-1 font-medium ${colorClass[color]}`}
+      >
+        <option value="green" className="text-green-600">緑</option>
+        <option value="blue" className="text-blue-600">青</option>
+        <option value="white" className="text-gray-400">白</option>
+        <option value="black" className="text-gray-800">黒</option>
+      </select>
+
+      {/* 座標選択 */}
+      <div className="flex items-center gap-1">
+        <select
+          value={col}
+          onChange={(e) => setCol(parseInt(e.target.value))}
+          className="border rounded px-1.5 py-1 w-12"
         >
-          <GreenStoneIcon className="w-4 h-4" />
-          <span>巨石</span>
-        </button>
-        <button
-          onClick={() => handleTypeChange('shack')}
-          className={`flex items-center gap-1 px-2 py-1 rounded border ${
-            type === 'shack' ? 'bg-emerald-100 border-emerald-500' : 'bg-white border-gray-300'
-          }`}
+          {columns.map((c, i) => (
+            <option key={c} value={i}>{c}</option>
+          ))}
+        </select>
+        <select
+          value={row}
+          onChange={(e) => setRow(parseInt(e.target.value))}
+          className="border rounded px-1.5 py-1 w-12"
         >
-          <WhiteShackIcon className="w-4 h-4" />
-          <span>廃墟</span>
-        </button>
+          {rows.map((r) => (
+            <option key={r} value={r - 1}>{r}</option>
+          ))}
+        </select>
       </div>
 
-      {/* 色選択 + 座標 + 追加ボタン */}
-      <div className="flex items-center gap-2">
-        <div className="flex gap-1">
-          {colorOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setColor(opt.value)}
-              className={`flex items-center gap-0.5 px-2 py-1 rounded border ${
-                color === opt.value ? 'bg-emerald-100 border-emerald-500' : 'bg-white border-gray-300'
-              }`}
-            >
-              <span className={opt.colorClass}>{opt.icon}</span>
-              <span className={opt.colorClass}>{opt.label}</span>
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1">
-          <select
-            value={col}
-            onChange={(e) => setCol(parseInt(e.target.value))}
-            className="border rounded px-1.5 py-1 w-12"
-          >
-            {columns.map((c, i) => (
-              <option key={c} value={i}>{c}</option>
-            ))}
-          </select>
-          <select
-            value={row}
-            onChange={(e) => setRow(parseInt(e.target.value))}
-            className="border rounded px-1.5 py-1 w-12"
-          >
-            {rows.map((r) => (
-              <option key={r} value={r - 1}>{r}</option>
-            ))}
-          </select>
-        </div>
-        <button
-          onClick={handleAdd}
-          className="px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600"
-        >
-          追加
-        </button>
-      </div>
+      <button
+        onClick={handleAdd}
+        className="px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600"
+      >
+        追加
+      </button>
     </div>
   );
 }
