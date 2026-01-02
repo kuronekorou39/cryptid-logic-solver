@@ -209,7 +209,12 @@ export function MapView() {
           </div>
           <button
             onClick={() => setShowTiles(false)}
-            className="w-full mt-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition-colors"
+            disabled={unplacedTiles > 0}
+            className={`w-full mt-3 py-1.5 text-sm font-medium rounded transition-colors ${
+              unplacedTiles > 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
           >
             OK
           </button>
@@ -283,7 +288,12 @@ export function MapView() {
           </div>
           <button
             onClick={() => { setShowStones(false); setSelectedStructure(null); }}
-            className="w-full mt-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition-colors"
+            disabled={unplacedStones > 0}
+            className={`w-full mt-3 py-1.5 text-sm font-medium rounded transition-colors ${
+              unplacedStones > 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
           >
             OK
           </button>
@@ -357,7 +367,12 @@ export function MapView() {
           </div>
           <button
             onClick={() => { setShowShacks(false); setSelectedStructure(null); }}
-            className="w-full mt-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition-colors"
+            disabled={unplacedShacks > 0}
+            className={`w-full mt-3 py-1.5 text-sm font-medium rounded transition-colors ${
+              unplacedShacks > 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
           >
             OK
           </button>
