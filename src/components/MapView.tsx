@@ -22,7 +22,8 @@ type Coord = { col: number; row: number } | null;
 export function MapView() {
   const [tileConfig, setTileConfig] = useState(DEFAULT_MAP_CONFIG.tiles);
   const [showTiles, setShowTiles] = useState(true);
-  const [showStructures, setShowStructures] = useState(true);
+  const [showStones, setShowStones] = useState(true);
+  const [showShacks, setShowShacks] = useState(true);
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
 
   // 回転ボタンのハンドラ
@@ -144,13 +145,22 @@ export function MapView() {
               <TileIcon className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setShowStructures(!showStructures)}
+              onClick={() => setShowStones(!showStones)}
               className={`w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
-                showStructures ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                showStones ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
-              title="構造物設定"
+              title="巨石設定"
             >
               <GreenStoneIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setShowShacks(!showShacks)}
+              className={`w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
+                showShacks ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="廃墟設定"
+            >
+              <WhiteShackIcon className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -195,15 +205,15 @@ export function MapView() {
         </div>
       )}
 
-      {/* 構造物設定 */}
-      {showStructures && (
+      {/* 巨石設定 */}
+      {showStones && (
         <div className="bg-white rounded-xl shadow p-4">
           <h4 className="font-medium text-gray-600 text-sm mb-2 flex items-center gap-1">
             <GreenStoneIcon className="w-4 h-4" />
-            構造物
+            巨石
           </h4>
           <div className="space-y-1">
-            {STRUCTURE_DEFS.map((def) => {
+            {STRUCTURE_DEFS.filter((def) => def.type === 'stone').map((def) => {
               const coord = structureCoords[def.id];
               const isSelected = selectedStructure === def.id;
               const Icon = def.icon;
@@ -221,7 +231,6 @@ export function MapView() {
                   <span className={def.colorClass}>
                     <Icon className="w-5 h-5" />
                   </span>
-                  <span className="w-8">{def.label}</span>
                   <span className={`w-4 ${def.colorClass}`}>{def.colorLabel}</span>
 
                   {/* 座標選択 */}
@@ -261,9 +270,74 @@ export function MapView() {
               );
             })}
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            行をクリックして選択→マップ上のマスをクリックで座標設定
-          </p>
+        </div>
+      )}
+
+      {/* 廃墟設定 */}
+      {showShacks && (
+        <div className="bg-white rounded-xl shadow p-4">
+          <h4 className="font-medium text-gray-600 text-sm mb-2 flex items-center gap-1">
+            <WhiteShackIcon className="w-4 h-4" />
+            廃墟
+          </h4>
+          <div className="space-y-1">
+            {STRUCTURE_DEFS.filter((def) => def.type === 'shack').map((def) => {
+              const coord = structureCoords[def.id];
+              const isSelected = selectedStructure === def.id;
+              const Icon = def.icon;
+
+              return (
+                <div
+                  key={def.id}
+                  className={`flex items-center gap-2 text-sm p-1.5 rounded cursor-pointer transition-colors ${
+                    isSelected
+                      ? 'bg-amber-100 ring-2 ring-amber-400'
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setSelectedStructure(isSelected ? null : def.id)}
+                >
+                  <span className={def.colorClass}>
+                    <Icon className="w-5 h-5" />
+                  </span>
+                  <span className={`w-4 ${def.colorClass}`}>{def.colorLabel}</span>
+
+                  {/* 座標選択 */}
+                  <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                    {coord ? (
+                      <>
+                        <select
+                          value={coord.col}
+                          onChange={(e) => updateStructureCoord(def.id, parseInt(e.target.value), coord.row)}
+                          className="border rounded px-1 py-0.5 w-11 text-xs"
+                        >
+                          {columns.map((c, i) => (
+                            <option key={c} value={i}>{c}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={coord.row}
+                          onChange={(e) => updateStructureCoord(def.id, coord.col, parseInt(e.target.value))}
+                          className="border rounded px-1 py-0.5 w-11 text-xs"
+                        >
+                          {rows.map((r) => (
+                            <option key={r} value={r - 1}>{r}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => clearStructureCoord(def.id)}
+                          className="text-red-500 hover:text-red-700 px-1"
+                        >
+                          ×
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-gray-400 text-xs">マップをクリック</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
