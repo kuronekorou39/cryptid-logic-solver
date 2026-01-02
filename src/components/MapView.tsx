@@ -97,24 +97,26 @@ export function MapView() {
           {/* 構造物配置 */}
           <div>
             <h4 className="font-medium text-gray-600 text-sm mb-2">構造物</h4>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {mapConfig.structures.map((s, i) => (
-                <span
-                  key={i}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs"
-                >
-                  {s.type === 'stone' ? '巨石' : '廃墟'}({s.color})
-                  @{String.fromCharCode(65 + s.col)}{s.row + 1}
-                  <button
-                    onClick={() => removeStructure(s.col, s.row)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
             <StructureInput onAdd={addStructure} />
+            {mapConfig.structures.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {mapConfig.structures.map((s, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs"
+                  >
+                    {s.type === 'stone' ? '巨石' : '廃墟'}({s.color})
+                    @{String.fromCharCode(65 + s.col)}{s.row + 1}
+                    <button
+                      onClick={() => removeStructure(s.col, s.row)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
