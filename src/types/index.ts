@@ -113,7 +113,7 @@ export interface Player {
 
 /** タイル配置 */
 export interface TileConfig {
-  tileId: number;
+  tileId: number | null;  // null = 未設定
   reversed: boolean;
 }
 

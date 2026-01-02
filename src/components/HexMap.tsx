@@ -76,6 +76,7 @@ function generateMapCells(config: MapConfig): CellData[] {
   ];
 
   config.tiles.forEach((tileConfig, posIndex) => {
+    if (tileConfig.tileId === null) return;
     const baseTile = MAP_TILES[tileConfig.tileId];
     if (!baseTile) return;
 

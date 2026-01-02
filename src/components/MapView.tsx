@@ -39,7 +39,7 @@ export function MapView() {
   };
 
   // タイル設定を更新
-  const updateTile = (index: number, tileId: number, reversed: boolean) => {
+  const updateTile = (index: number, tileId: number | null, reversed: boolean) => {
     const newTiles = tileConfig.map((t, i) => (i === index ? { tileId, reversed } : t));
     setTiles(newTiles);
   };
@@ -87,7 +87,8 @@ export function MapView() {
     return new Set([`${coord.col}-${coord.row}`]);
   }, [selectedStructure, structureCoords]);
 
-  // 未設定の構造物数を計算
+  // 未設定の数を計算
+  const unplacedTiles = tileConfig.filter((t) => t.tileId === null).length;
   const unplacedStones = STRUCTURE_DEFS
     .filter((def) => def.type === 'stone' && (isAdvanced || def.color !== 'black'))
     .filter((def) => structureCoords[def.id] === null).length;
@@ -123,12 +124,17 @@ export function MapView() {
             </button>
             <button
               onClick={() => setShowTiles(!showTiles)}
-              className={`w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
+              className={`relative w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
                 showTiles ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
               title="タイル設定"
             >
               <TileIcon className="w-5 h-5" />
+              {unplacedTiles > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {unplacedTiles}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setShowStones(!showStones)}
@@ -173,12 +179,14 @@ export function MapView() {
             {tileConfig.map((tile, index) => (
               <div key={index} className="flex items-center justify-center gap-2 text-sm bg-gray-50 rounded p-1.5">
                 <select
-                  value={tile.tileId}
-                  onChange={(e) =>
-                    updateTile(index, parseInt(e.target.value), tile.reversed)
-                  }
-                  className="border rounded px-2 py-1 w-14"
+                  value={tile.tileId ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateTile(index, val === '' ? null : parseInt(val), tile.reversed);
+                  }}
+                  className={`border rounded px-2 py-1 w-14 ${tile.tileId === null ? 'text-gray-400' : ''}`}
                 >
+                  <option value="">-</option>
                   {[1, 2, 3, 4, 5, 6].map((id) => (
                     <option key={id} value={id}>
                       {id}
@@ -189,11 +197,12 @@ export function MapView() {
                   <input
                     type="checkbox"
                     checked={tile.reversed}
+                    disabled={tile.tileId === null}
                     onChange={(e) =>
                       updateTile(index, tile.tileId, e.target.checked)
                     }
                   />
-                  <span className="text-xs text-gray-500">逆</span>
+                  <span className={`text-xs ${tile.tileId === null ? 'text-gray-300' : 'text-gray-500'}`}>逆</span>
                 </label>
               </div>
             ))}

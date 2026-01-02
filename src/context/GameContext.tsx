@@ -25,12 +25,12 @@ type GameReducerAction =
 // ========================================
 
 const DEFAULT_TILES: TileConfig[] = [
-  { tileId: 1, reversed: false },
-  { tileId: 2, reversed: false },
-  { tileId: 3, reversed: false },
-  { tileId: 4, reversed: false },
-  { tileId: 5, reversed: false },
-  { tileId: 6, reversed: false },
+  { tileId: null, reversed: false },
+  { tileId: null, reversed: false },
+  { tileId: null, reversed: false },
+  { tileId: null, reversed: false },
+  { tileId: null, reversed: false },
+  { tileId: null, reversed: false },
 ]
 
 const DEFAULT_STRUCTURE_COORDS: Record<string, StructureCoord | null> = {

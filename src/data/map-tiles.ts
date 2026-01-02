@@ -187,7 +187,7 @@ export function rotateTile180(tile: MapTile): MapTile {
 export interface MapConfig {
   // 6つのタイル配置 [上段左, 上段中, 上段右, 下段左, 下段中, 下段右]
   tiles: {
-    tileId: number;    // 1-6
+    tileId: number | null;    // 1-6, null = 未設定
     reversed: boolean; // true = 180度回転
   }[];
   // 構造物配置
