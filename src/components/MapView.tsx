@@ -114,6 +114,14 @@ export function MapView() {
     return new Set([`${coord.col}-${coord.row}`]);
   }, [selectedStructure, structureCoords]);
 
+  // 未設定の構造物数を計算
+  const unplacedStones = STRUCTURE_DEFS
+    .filter((def) => def.type === 'stone' && (isAdvanced || def.color !== 'black'))
+    .filter((def) => structureCoords[def.id] === null).length;
+  const unplacedShacks = STRUCTURE_DEFS
+    .filter((def) => def.type === 'shack' && (isAdvanced || def.color !== 'black'))
+    .filter((def) => structureCoords[def.id] === null).length;
+
   const columns = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
   const rows = Array.from({ length: 9 }, (_, i) => i + 1);
 
@@ -151,21 +159,31 @@ export function MapView() {
             </button>
             <button
               onClick={() => setShowStones(!showStones)}
-              className={`w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
+              className={`relative w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
                 showStones ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
               title="巨石設定"
             >
               <GreenStoneIcon className="w-5 h-5" />
+              {unplacedStones > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {unplacedStones}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setShowShacks(!showShacks)}
-              className={`w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
+              className={`relative w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
                 showShacks ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
               title="廃墟設定"
             >
               <WhiteShackIcon className="w-5 h-5" />
+              {unplacedShacks > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {unplacedShacks}
+                </span>
+              )}
             </button>
           </div>
         </div>
