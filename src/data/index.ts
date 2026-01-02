@@ -8,6 +8,16 @@
 export { hintsNormal, NORMAL_HINT_COUNT } from './hints-normal';
 export { hintsAdvanced, ADVANCED_HINT_COUNT } from './hints-advanced';
 
+// マップデータ
+export {
+  MAP_TILES,
+  rotateTile180,
+  DEFAULT_MAP_CONFIG,
+  type MapTile,
+  type TileHex,
+  type MapConfig,
+} from './map-tiles';
+
 // 定数データ
 export {
   // 地形
