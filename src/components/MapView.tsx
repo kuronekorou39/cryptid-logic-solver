@@ -1,15 +1,19 @@
 import { useState, useMemo } from 'react';
 import { HexMap } from './HexMap';
 import { DEFAULT_MAP_CONFIG, type MapConfig } from '../data/map-tiles';
-import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, BlackShackIcon } from './Icons';
+import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon } from './Icons';
 import type { StructureColor } from '../types';
 
-// 4つの構造物定義
+// 8つの構造物定義（巨石4色 + 廃墟4色）
 const STRUCTURE_DEFS = [
   { id: 'stone-green', type: 'stone' as const, color: 'green' as StructureColor, label: '巨石', colorLabel: '緑', icon: GreenStoneIcon, colorClass: 'text-green-600' },
   { id: 'stone-blue', type: 'stone' as const, color: 'blue' as StructureColor, label: '巨石', colorLabel: '青', icon: BlueStoneIcon, colorClass: 'text-blue-600' },
+  { id: 'stone-white', type: 'stone' as const, color: 'white' as StructureColor, label: '巨石', colorLabel: '白', icon: GreenStoneIcon, colorClass: 'text-gray-400' },
+  { id: 'stone-black', type: 'stone' as const, color: 'black' as StructureColor, label: '巨石', colorLabel: '黒', icon: GreenStoneIcon, colorClass: 'text-gray-800' },
+  { id: 'shack-green', type: 'shack' as const, color: 'green' as StructureColor, label: '廃墟', colorLabel: '緑', icon: WhiteShackIcon, colorClass: 'text-green-600' },
+  { id: 'shack-blue', type: 'shack' as const, color: 'blue' as StructureColor, label: '廃墟', colorLabel: '青', icon: WhiteShackIcon, colorClass: 'text-blue-600' },
   { id: 'shack-white', type: 'shack' as const, color: 'white' as StructureColor, label: '廃墟', colorLabel: '白', icon: WhiteShackIcon, colorClass: 'text-gray-400' },
-  { id: 'shack-black', type: 'shack' as const, color: 'black' as StructureColor, label: '廃墟', colorLabel: '黒', icon: BlackShackIcon, colorClass: 'text-gray-800' },
+  { id: 'shack-black', type: 'shack' as const, color: 'black' as StructureColor, label: '廃墟', colorLabel: '黒', icon: WhiteShackIcon, colorClass: 'text-gray-800' },
 ];
 
 // 座標の型（未設定はnull）
@@ -23,6 +27,10 @@ export function MapView() {
   const [structureCoords, setStructureCoords] = useState<Record<string, Coord>>({
     'stone-green': null,
     'stone-blue': null,
+    'stone-white': null,
+    'stone-black': null,
+    'shack-green': null,
+    'shack-blue': null,
     'shack-white': null,
     'shack-black': null,
   });
