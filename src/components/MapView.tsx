@@ -21,7 +21,7 @@ type Coord = { col: number; row: number } | null;
 
 export function MapView() {
   const [tileConfig, setTileConfig] = useState(DEFAULT_MAP_CONFIG.tiles);
-  const [showSetup, setShowSetup] = useState(true);
+  const [showTileConfig, setShowTileConfig] = useState(true);
 
   // 各構造物の座標を個別に管理
   const [structureCoords, setStructureCoords] = useState<Record<string, Coord>>({
@@ -105,125 +105,125 @@ export function MapView() {
   const rows = Array.from({ length: 9 }, (_, i) => i + 1);
 
   return (
-    <div className="space-y-4 select-none">
-      {/* 設定トグル */}
-      <button
-        onClick={() => setShowSetup(!showSetup)}
-        className="text-sm text-blue-600 hover:text-blue-800"
-      >
-        {showSetup ? '設定を隠す' : 'マップ設定を表示'}
-      </button>
-
-      {/* マップ設定UI */}
-      {showSetup && (
-        <div className="bg-white rounded-xl shadow p-4 space-y-4">
-          <h3 className="font-bold text-gray-700">タイル配置</h3>
-          <div className="grid grid-cols-2 gap-1">
-            {tileConfig.map((tile, index) => (
-              <div key={index} className="flex items-center justify-center gap-2 text-sm bg-gray-50 rounded p-1.5">
-                <select
-                  value={tile.tileId}
-                  onChange={(e) =>
-                    updateTile(index, parseInt(e.target.value), tile.reversed)
-                  }
-                  className="border rounded px-2 py-1 w-14"
-                >
-                  {[1, 2, 3, 4, 5, 6].map((id) => (
-                    <option key={id} value={id}>
-                      {id}
-                    </option>
-                  ))}
-                </select>
-                <label className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={tile.reversed}
-                    onChange={(e) =>
-                      updateTile(index, tile.tileId, e.target.checked)
-                    }
-                  />
-                  <span className="text-xs text-gray-500">逆</span>
-                </label>
-              </div>
-            ))}
-          </div>
-
-          {/* 構造物配置 */}
-          <div>
-            <h4 className="font-medium text-gray-600 text-sm mb-2">構造物</h4>
-            <div className="space-y-1">
-              {STRUCTURE_DEFS.map((def) => {
-                const coord = structureCoords[def.id];
-                const isSelected = selectedStructure === def.id;
-                const Icon = def.icon;
-
-                return (
-                  <div
-                    key={def.id}
-                    className={`flex items-center gap-2 text-sm p-1.5 rounded cursor-pointer transition-colors ${
-                      isSelected
-                        ? 'bg-amber-100 ring-2 ring-amber-400'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                    onClick={() => setSelectedStructure(isSelected ? null : def.id)}
-                  >
-                    <span className={def.colorClass}>
-                      <Icon className="w-5 h-5" />
-                    </span>
-                    <span className="w-8">{def.label}</span>
-                    <span className={`w-4 ${def.colorClass}`}>{def.colorLabel}</span>
-
-                    {/* 座標選択 */}
-                    <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
-                      {coord ? (
-                        <>
-                          <select
-                            value={coord.col}
-                            onChange={(e) => updateStructureCoord(def.id, parseInt(e.target.value), coord.row)}
-                            className="border rounded px-1 py-0.5 w-11 text-xs"
-                          >
-                            {columns.map((c, i) => (
-                              <option key={c} value={i}>{c}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={coord.row}
-                            onChange={(e) => updateStructureCoord(def.id, coord.col, parseInt(e.target.value))}
-                            className="border rounded px-1 py-0.5 w-11 text-xs"
-                          >
-                            {rows.map((r) => (
-                              <option key={r} value={r - 1}>{r}</option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={() => clearStructureCoord(def.id)}
-                            className="text-red-500 hover:text-red-700 px-1"
-                          >
-                            ×
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-gray-400 text-xs">マップをクリック</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              行をクリックして選択→マップ上のマスをクリックで座標設定
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* マップ表示 */}
+    <div className="space-y-3 select-none">
+      {/* マップ表示（一番上） */}
       <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
         <HexMap
           config={mapConfig}
           highlightedCells={highlightedCells}
           onCellClick={handleCellClick}
         />
+      </div>
+
+      {/* タイル配置（アコーディオン） */}
+      <div className="bg-white rounded-xl shadow overflow-hidden">
+        <button
+          onClick={() => setShowTileConfig(!showTileConfig)}
+          className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+        >
+          <span className="font-bold text-gray-700 text-sm">タイル配置</span>
+          <span className="text-gray-400">{showTileConfig ? '▲' : '▼'}</span>
+        </button>
+        {showTileConfig && (
+          <div className="px-4 pb-4">
+            <div className="grid grid-cols-2 gap-1">
+              {tileConfig.map((tile, index) => (
+                <div key={index} className="flex items-center justify-center gap-2 text-sm bg-gray-50 rounded p-1.5">
+                  <select
+                    value={tile.tileId}
+                    onChange={(e) =>
+                      updateTile(index, parseInt(e.target.value), tile.reversed)
+                    }
+                    className="border rounded px-2 py-1 w-14"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((id) => (
+                      <option key={id} value={id}>
+                        {id}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={tile.reversed}
+                      onChange={(e) =>
+                        updateTile(index, tile.tileId, e.target.checked)
+                      }
+                    />
+                    <span className="text-xs text-gray-500">逆</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 構造物配置 */}
+      <div className="bg-white rounded-xl shadow p-4">
+        <h4 className="font-bold text-gray-700 text-sm mb-2">構造物</h4>
+        <div className="space-y-1">
+          {STRUCTURE_DEFS.map((def) => {
+            const coord = structureCoords[def.id];
+            const isSelected = selectedStructure === def.id;
+            const Icon = def.icon;
+
+            return (
+              <div
+                key={def.id}
+                className={`flex items-center gap-2 text-sm p-1.5 rounded cursor-pointer transition-colors ${
+                  isSelected
+                    ? 'bg-amber-100 ring-2 ring-amber-400'
+                    : 'bg-gray-50 hover:bg-gray-100'
+                }`}
+                onClick={() => setSelectedStructure(isSelected ? null : def.id)}
+              >
+                <span className={def.colorClass}>
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="w-8">{def.label}</span>
+                <span className={`w-4 ${def.colorClass}`}>{def.colorLabel}</span>
+
+                {/* 座標選択 */}
+                <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                  {coord ? (
+                    <>
+                      <select
+                        value={coord.col}
+                        onChange={(e) => updateStructureCoord(def.id, parseInt(e.target.value), coord.row)}
+                        className="border rounded px-1 py-0.5 w-11 text-xs"
+                      >
+                        {columns.map((c, i) => (
+                          <option key={c} value={i}>{c}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={coord.row}
+                        onChange={(e) => updateStructureCoord(def.id, coord.col, parseInt(e.target.value))}
+                        className="border rounded px-1 py-0.5 w-11 text-xs"
+                      >
+                        {rows.map((r) => (
+                          <option key={r} value={r - 1}>{r}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => clearStructureCoord(def.id)}
+                        className="text-red-500 hover:text-red-700 px-1"
+                      >
+                        ×
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-gray-400 text-xs">マップをクリック</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          行をクリックして選択→マップ上のマスをクリックで座標設定
+        </p>
       </div>
     </div>
   );
