@@ -22,6 +22,15 @@ type Coord = { col: number; row: number } | null;
 export function MapView() {
   const [tileConfig, setTileConfig] = useState(DEFAULT_MAP_CONFIG.tiles);
   const [showTileConfig, setShowTileConfig] = useState(true);
+  const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
+
+  // 回転ボタンのハンドラ
+  const rotateClockwise = () => {
+    setRotation((prev) => ((prev + 90) % 360) as 0 | 90 | 180 | 270);
+  };
+  const rotateCounterClockwise = () => {
+    setRotation((prev) => ((prev - 90 + 360) % 360) as 0 | 90 | 180 | 270);
+  };
 
   // 各構造物の座標を個別に管理
   const [structureCoords, setStructureCoords] = useState<Record<string, Coord>>({
@@ -108,11 +117,34 @@ export function MapView() {
     <div className="space-y-3 select-none">
       {/* マップ表示（一番上） */}
       <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
-        <HexMap
-          config={mapConfig}
-          highlightedCells={highlightedCells}
-          onCellClick={handleCellClick}
-        />
+        <div className="flex items-center gap-2">
+          {/* マップ（左寄せ） */}
+          <div className="flex-1">
+            <HexMap
+              config={mapConfig}
+              highlightedCells={highlightedCells}
+              onCellClick={handleCellClick}
+              rotation={rotation}
+            />
+          </div>
+          {/* 回転ボタン（右側） */}
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <button
+              onClick={rotateClockwise}
+              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg text-xl font-bold text-gray-600 transition-colors"
+              title="時計回りに90°回転"
+            >
+              ↻
+            </button>
+            <button
+              onClick={rotateCounterClockwise}
+              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg text-xl font-bold text-gray-600 transition-colors"
+              title="反時計回りに90°回転"
+            >
+              ↺
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* マップ設定（アコーディオン） */}

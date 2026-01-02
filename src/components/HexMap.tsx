@@ -23,6 +23,7 @@ interface HexMapProps {
   config: MapConfig;
   highlightedCells?: Set<string>; // "col-row" 形式のセット
   onCellClick?: (col: number, row: number) => void;
+  rotation?: 0 | 90 | 180 | 270;
 }
 
 // ヘックスのサイズ（flat-top）
@@ -186,13 +187,22 @@ function getTileLabels(config: MapConfig): { x: number; y: number; label: string
   return labels;
 }
 
-export function HexMap({ config, highlightedCells, onCellClick }: HexMapProps) {
+export function HexMap({ config, highlightedCells, onCellClick, rotation = 0 }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
   // マップサイズ計算（12列×9行 + 余白）flat-top
-  const svgWidth = 12 * HEX_SIZE * 1.5 + HEX_SIZE * 0.5 + 60;
-  const svgHeight = 9 * HEX_HEIGHT + HEX_HEIGHT / 2 + 20;
+  const baseWidth = 12 * HEX_SIZE * 1.5 + HEX_SIZE * 0.5 + 60;
+  const baseHeight = 9 * HEX_HEIGHT + HEX_HEIGHT / 2 + 20;
+
+  // 90度/270度回転時は幅と高さを入れ替え
+  const isRotated90or270 = rotation === 90 || rotation === 270;
+  const svgWidth = isRotated90or270 ? baseHeight : baseWidth;
+  const svgHeight = isRotated90or270 ? baseWidth : baseHeight;
+
+  // 回転の中心点と変換
+  const centerX = baseWidth / 2;
+  const centerY = baseHeight / 2;
 
   return (
     <svg
@@ -201,72 +211,78 @@ export function HexMap({ config, highlightedCells, onCellClick }: HexMapProps) {
       className="max-w-full select-none"
       style={{ background: '#1f2937', userSelect: 'none' }}
     >
-      {/* 背景 */}
-      <rect x="25" y="5" width={svgWidth - 50} height={svgHeight - 10} fill="#f5f5dc" rx="8" />
+      <g transform={`
+        translate(${svgWidth / 2}, ${svgHeight / 2})
+        rotate(${rotation})
+        translate(${-centerX}, ${-centerY})
+      `}>
+        {/* 背景 */}
+        <rect x="25" y="5" width={baseWidth - 50} height={baseHeight - 10} fill="#f5f5dc" rx="8" />
 
-      {/* タイル番号ラベル */}
-      {tileLabels.map((label, i) => (
-        <text
-          key={i}
-          x={label.position === 'left' ? 15 : svgWidth - 15}
-          y={label.y}
-          textAnchor="middle"
-          fontSize={14}
-          fontWeight="bold"
-          fill="#fff"
-        >
-          {label.label}
-        </text>
-      ))}
-
-      {/* ヘックスセル */}
-      {cells.map((cell) => {
-        const { x, y } = hexToPixel(cell.col, cell.row);
-        const cellKey = `${cell.col}-${cell.row}`;
-        const isHighlighted = highlightedCells?.has(cellKey);
-
-        return (
-          <g
-            key={cellKey}
-            onClick={() => onCellClick?.(cell.col, cell.row)}
-            className={onCellClick ? 'cursor-pointer' : ''}
+        {/* タイル番号ラベル */}
+        {tileLabels.map((label, i) => (
+          <text
+            key={i}
+            x={label.position === 'left' ? 15 : baseWidth - 15}
+            y={label.y}
+            textAnchor="middle"
+            fontSize={14}
+            fontWeight="bold"
+            fill="#fff"
           >
-            {/* ヘックス本体 */}
-            <polygon
-              points={getHexPoints(x, y)}
-              fill={TERRAIN_COLORS[cell.terrain]}
-              stroke={isHighlighted ? '#fbbf24' : '#fff'}
-              strokeWidth={isHighlighted ? 3 : 1}
-              opacity={isHighlighted === false && highlightedCells ? 0.4 : 1}
-            />
+            {label.label}
+          </text>
+        ))}
 
-            {/* 座標ラベル（デバッグ用、小さく表示） */}
-            <text
-              x={x}
-              y={y - HEX_SIZE * 0.4}
-              textAnchor="middle"
-              fontSize={8}
-              fill="#fff"
-              opacity={0.7}
+        {/* ヘックスセル */}
+        {cells.map((cell) => {
+          const { x, y } = hexToPixel(cell.col, cell.row);
+          const cellKey = `${cell.col}-${cell.row}`;
+          const isHighlighted = highlightedCells?.has(cellKey);
+
+          return (
+            <g
+              key={cellKey}
+              onClick={() => onCellClick?.(cell.col, cell.row)}
+              className={onCellClick ? 'cursor-pointer' : ''}
             >
-              {String.fromCharCode(65 + cell.col)}{cell.row + 1}
-            </text>
-
-            {/* 動物マーカー */}
-            {cell.animal && <AnimalMarker animal={cell.animal} x={x} y={y} />}
-
-            {/* 構造物マーカー */}
-            {cell.structure && (
-              <StructureMarker
-                type={cell.structure.type}
-                color={cell.structure.color}
-                x={x}
-                y={y}
+              {/* ヘックス本体 */}
+              <polygon
+                points={getHexPoints(x, y)}
+                fill={TERRAIN_COLORS[cell.terrain]}
+                stroke={isHighlighted ? '#fbbf24' : '#fff'}
+                strokeWidth={isHighlighted ? 3 : 1}
+                opacity={isHighlighted === false && highlightedCells ? 0.4 : 1}
               />
-            )}
-          </g>
-        );
-      })}
+
+              {/* 座標ラベル（デバッグ用、小さく表示） */}
+              <text
+                x={x}
+                y={y - HEX_SIZE * 0.4}
+                textAnchor="middle"
+                fontSize={8}
+                fill="#fff"
+                opacity={0.7}
+              >
+                {String.fromCharCode(65 + cell.col)}{cell.row + 1}
+              </text>
+
+              {/* 動物マーカー */}
+              {cell.animal && <AnimalMarker animal={cell.animal} x={x} y={y} />}
+
+              {/* 構造物マーカー */}
+              {cell.structure && (
+                <StructureMarker
+                  type={cell.structure.type}
+                  color={cell.structure.color}
+                  x={x}
+                  y={y}
+                />
+              )}
+            </g>
+          );
+        })}
+      </g>
     </svg>
   );
 }
