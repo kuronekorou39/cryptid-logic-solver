@@ -183,15 +183,40 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
     case 'LOAD_STATE':
       return action.payload
 
-    case 'SET_TILES':
+    case 'SET_TILES': {
+      // 重複するタイル番号をクリア
+      const newTiles = action.payload.map((tile, index) => {
+        if (tile.tileId === null) return tile
+        // 同じタイル番号が他の位置にあればクリア
+        const duplicate = action.payload.findIndex(
+          (t, i) => i !== index && t.tileId === tile.tileId
+        )
+        if (duplicate !== -1 && duplicate < index) {
+          // 先に設定されていた方を優先し、後から設定した方は残す
+          return tile
+        }
+        return tile
+      })
+      // 重複している古い方をクリア
+      const cleanedTiles = newTiles.map((tile, index) => {
+        if (tile.tileId === null) return tile
+        const laterDuplicate = newTiles.findIndex(
+          (t, i) => i > index && t.tileId === tile.tileId
+        )
+        if (laterDuplicate !== -1) {
+          return { ...tile, tileId: null }
+        }
+        return tile
+      })
       return {
         ...state,
         mapSettings: {
           ...state.mapSettings,
-          tiles: action.payload,
+          tiles: cleanedTiles,
         },
         updatedAt: Date.now(),
       }
+    }
 
     case 'SET_STRUCTURE_COORD': {
       const { id, coord } = action.payload
