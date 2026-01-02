@@ -63,41 +63,34 @@ export function MapView() {
       {showSetup && (
         <div className="bg-white rounded-xl shadow p-4 space-y-4">
           <h3 className="font-bold text-gray-700">タイル配置</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {mapConfig.tiles.map((tile, index) => {
-              const rowLabel = ['上', '中', '下'][Math.floor(index / 2)];
-              const colLabel = index % 2 === 0 ? '左' : '右';
-              return (
-                <div key={index} className="flex items-center gap-2 text-sm bg-gray-50 rounded p-2">
-                  <span className="text-gray-500 w-8 font-medium">
-                    {rowLabel}{colLabel}
-                  </span>
-                  <select
-                    value={tile.tileId}
+          <div className="grid grid-cols-2 gap-1">
+            {mapConfig.tiles.map((tile, index) => (
+              <div key={index} className="flex items-center justify-center gap-2 text-sm bg-gray-50 rounded p-1.5">
+                <select
+                  value={tile.tileId}
+                  onChange={(e) =>
+                    updateTile(index, parseInt(e.target.value), tile.reversed)
+                  }
+                  className="border rounded px-2 py-1 w-14"
+                >
+                  {[1, 2, 3, 4, 5, 6].map((id) => (
+                    <option key={id} value={id}>
+                      {id}
+                    </option>
+                  ))}
+                </select>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    checked={tile.reversed}
                     onChange={(e) =>
-                      updateTile(index, parseInt(e.target.value), tile.reversed)
+                      updateTile(index, tile.tileId, e.target.checked)
                     }
-                    className="border rounded px-2 py-1 w-16"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map((id) => (
-                      <option key={id} value={id}>
-                        {id}
-                      </option>
-                    ))}
-                  </select>
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      checked={tile.reversed}
-                      onChange={(e) =>
-                        updateTile(index, tile.tileId, e.target.checked)
-                      }
-                    />
-                    <span className="text-xs">逆</span>
-                  </label>
-                </div>
-              );
-            })}
+                  />
+                  <span className="text-xs text-gray-500">逆</span>
+                </label>
+              </div>
+            ))}
           </div>
 
           {/* 構造物配置 */}
