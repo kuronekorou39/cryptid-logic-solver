@@ -101,46 +101,15 @@ function getHintIcons(hint: Hint): React.ReactNode[] {
   return icons
 }
 
-// フィルター用の型
-type FilterType = 'terrain' | 'animal' | 'structure'
-type FilterValue = TerrainType | AnimalType | StructureColor | 'anyAnimal' | 'anyStructure' | 'stone' | 'shack'
-
-function hintMatchesFilter(hint: Hint, filterType: FilterType, filterValue: FilterValue): boolean {
-  const { condition } = hint
-
-  if (filterType === 'terrain') {
-    return condition.terrains?.includes(filterValue as TerrainType) ?? false
-  }
-
-  if (filterType === 'animal') {
-    if (filterValue === 'anyAnimal') {
-      return condition.anyAnimal === true
-    }
-    return condition.animals?.includes(filterValue as AnimalType) ?? false
-  }
-
-  if (filterType === 'structure') {
-    if (filterValue === 'anyStructure') {
-      return condition.anyStructure === true
-    }
-    if (filterValue === 'stone') {
-      const colors = condition.structureColors
-      return !!(colors && colors.includes('green') && colors.includes('blue') && colors.length === 2)
-    }
-    if (filterValue === 'shack') {
-      const colors = condition.structureColors
-      return !!(colors && colors.includes('white') && colors.includes('black') && colors.length === 2)
-    }
-    return condition.structureColors?.includes(filterValue as StructureColor) ?? false
-  }
-
-  return false
+// ヒントが地形フィルターにマッチするか判定
+function hintMatchesTerrain(hint: Hint, terrain: TerrainType): boolean {
+  return hint.condition.terrains?.includes(terrain) ?? false
 }
 
 export function GameBoard() {
   const { state, toggleHint, togglePlayer, setPlayerName } = useGame()
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(state.players[0]?.id || 'α')
-  const [activeFilters, setActiveFilters] = useState<{ type: FilterType; value: FilterValue }[]>([])
+  const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [tempName, setTempName] = useState('')
@@ -150,10 +119,10 @@ export function GameBoard() {
   const enabledPlayersCount = state.players.filter((p) => p.enabled).length
 
   // フィルター適用
-  let filteredHints = activeFilters.length === 0
+  let filteredHints = terrainFilters.length === 0
     ? allHints
     : allHints.filter((hint) =>
-        activeFilters.every((f) => hintMatchesFilter(hint, f.type, f.value))
+        terrainFilters.every((t) => hintMatchesTerrain(hint, t))
       )
 
   // OFFの項目を非表示
@@ -163,20 +132,15 @@ export function GameBoard() {
     )
   }
 
-  const toggleFilter = (type: FilterType, value: FilterValue) => {
-    setActiveFilters((prev) => {
-      const exists = prev.some((f) => f.type === type && f.value === value)
-      if (exists) {
-        return prev.filter((f) => !(f.type === type && f.value === value))
-      }
-      return [...prev, { type, value }]
-    })
+  const toggleTerrainFilter = (terrain: TerrainType) => {
+    setTerrainFilters((prev) =>
+      prev.includes(terrain)
+        ? prev.filter((t) => t !== terrain)
+        : [...prev, terrain]
+    )
   }
 
-  const isFilterActive = (type: FilterType, value: FilterValue) =>
-    activeFilters.some((f) => f.type === type && f.value === value)
-
-  const clearFilters = () => setActiveFilters([])
+  const clearFilters = () => setTerrainFilters([])
 
   const handleStartEditName = () => {
     if (selectedPlayer) {
@@ -319,118 +283,57 @@ export function GameBoard() {
         </div>
       )}
 
-      {/* フィルターバー（有効なプレイヤーのみ表示） */}
+      {/* コンパクトなフィルターバー（有効なプレイヤーのみ表示） */}
       {selectedPlayer?.enabled && (
-        <div className="bg-white rounded-xl shadow p-3 mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-500 font-medium">絞り込み</span>
-            {activeFilters.length > 0 && (
+        <div className="bg-white rounded-xl shadow px-3 py-2 mb-3">
+          <div className="flex items-center gap-2">
+            {/* 地形フィルター（5種類のみ） */}
+            <div className="flex gap-1">
+              {(['forest', 'desert', 'swamp', 'mountain', 'water'] as TerrainType[]).map((t) => {
+                const info = terrainIcons[t]
+                const active = terrainFilters.includes(t)
+                return (
+                  <button
+                    key={t}
+                    onClick={() => toggleTerrainFilter(t)}
+                    className={`p-1 rounded transition-all ${
+                      active
+                        ? 'bg-emerald-100 ring-2 ring-emerald-500'
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className={info.color}>{info.icon}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {terrainFilters.length > 0 && (
               <button
                 onClick={clearFilters}
                 className="text-xs text-red-500 hover:text-red-600"
               >
-                クリア
+                ×
               </button>
             )}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {(['forest', 'desert', 'swamp', 'mountain', 'water'] as TerrainType[]).map((t) => {
-              const info = terrainIcons[t]
-              const active = isFilterActive('terrain', t)
-              return (
-                <button
-                  key={t}
-                  onClick={() => toggleFilter('terrain', t)}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    active
-                      ? 'bg-emerald-100 ring-2 ring-emerald-500'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                  title={t}
-                >
-                  <span className={info.color}>{info.icon}</span>
-                </button>
-              )
-            })}
-            <span className="w-px bg-gray-300 mx-1" />
-            {(['bear', 'cougar'] as AnimalType[]).map((a) => {
-              const info = animalIcons[a]
-              const active = isFilterActive('animal', a)
-              return (
-                <button
-                  key={a}
-                  onClick={() => toggleFilter('animal', a)}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    active
-                      ? 'bg-emerald-100 ring-2 ring-emerald-500'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  <span className={info.color}>{info.icon}</span>
-                </button>
-              )
-            })}
-            <span className="w-px bg-gray-300 mx-1" />
-            <button
-              onClick={() => toggleFilter('structure', 'stone')}
-              className={`p-1.5 rounded-lg transition-all ${
-                isFilterActive('structure', 'stone')
-                  ? 'bg-emerald-100 ring-2 ring-emerald-500'
-                  : 'bg-gray-100 hover:bg-gray-200'
-              }`}
-              title="巨石"
-            >
-              <span className="text-teal-600"><GreenStoneIcon /></span>
-            </button>
-            <button
-              onClick={() => toggleFilter('structure', 'shack')}
-              className={`p-1.5 rounded-lg transition-all ${
-                isFilterActive('structure', 'shack')
-                  ? 'bg-emerald-100 ring-2 ring-emerald-500'
-                  : 'bg-gray-100 hover:bg-gray-200'
-              }`}
-              title="廃墟"
-            >
-              <span className="text-gray-600"><WhiteShackIcon /></span>
-            </button>
-            {(['blue', 'white', 'green', 'black'] as StructureColor[]).map((c) => {
-              const info = structureIcons[c]
-              const active = isFilterActive('structure', c)
-              return (
-                <button
-                  key={c}
-                  onClick={() => toggleFilter('structure', c)}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    active
-                      ? 'bg-emerald-100 ring-2 ring-emerald-500'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  <span className={info.color}>{info.icon}</span>
-                </button>
-              )
-            })}
-          </div>
-          <div className="mt-3 pt-2 border-t border-gray-200 flex items-center justify-between">
-            <span className="text-xs text-gray-500">OFFを非表示</span>
+
+            <div className="flex-1" />
+
+            {/* OFFを非表示トグル */}
+            <span className="text-xs text-gray-400">OFF非表示</span>
             <button
               onClick={() => setHideOffItems(!hideOffItems)}
-              className={`w-10 h-5 rounded-full relative transition-colors ${
+              className={`w-8 h-4 rounded-full relative transition-colors ${
                 hideOffItems ? 'bg-emerald-500' : 'bg-gray-300'
               }`}
             >
               <div
-                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                  hideOffItems ? 'translate-x-5' : 'translate-x-0.5'
+                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
+                  hideOffItems ? 'translate-x-4' : 'translate-x-0.5'
                 }`}
               />
             </button>
           </div>
-          {(activeFilters.length > 0 || hideOffItems) && (
-            <div className="mt-2 text-xs text-gray-500">
-              {filteredHints.length}件のヒントを表示中
-            </div>
-          )}
         </div>
       )}
 
