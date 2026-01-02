@@ -111,3 +111,12 @@ export function StructureIcon({ className = "w-4 h-4" }: { className?: string })
     </svg>
   )
 }
+
+// タイル配置アイコン（グリッド）
+export function TileIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8zM5 5v4h4V5H5zm0 10v4h4v-4H5zm10-10v4h4V5h-4zm0 10v4h4v-4h-4z" />
+    </svg>
+  )
+}
