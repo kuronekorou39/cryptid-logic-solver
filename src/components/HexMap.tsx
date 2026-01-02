@@ -126,17 +126,29 @@ function generateMapCells(config: MapConfig): CellData[] {
   return cells;
 }
 
-// 動物アイコン
+// 内側六角形の頂点を計算（動物縄張り用）
+function getInnerHexPoints(cx: number, cy: number, size: number): string {
+  const points: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i;
+    const x = cx + size * Math.cos(angle);
+    const y = cy + size * Math.sin(angle);
+    points.push(`${x},${y}`);
+  }
+  return points.join(' ');
+}
+
+// 動物縄張りマーカー（内側六角形）
 function AnimalMarker({ animal, x, y }: { animal: AnimalType; x: number; y: number }) {
   const color = animal === 'bear' ? '#92400e' : '#ea580c'; // amber-800 / orange-600
+  const innerSize = HEX_SIZE * 0.6; // 外側の60%サイズ
   return (
-    <circle
-      cx={x}
-      cy={y + HEX_SIZE * 0.3}
-      r={6}
+    <polygon
+      points={getInnerHexPoints(x, y, innerSize)}
       fill={color}
-      stroke="#fff"
-      strokeWidth={1}
+      opacity={0.4}
+      stroke={color}
+      strokeWidth={2}
     />
   );
 }
