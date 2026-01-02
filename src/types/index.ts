@@ -108,6 +108,28 @@ export interface Player {
 }
 
 // ========================================
+// マップ設定
+// ========================================
+
+/** タイル配置 */
+export interface TileConfig {
+  tileId: number;
+  reversed: boolean;
+}
+
+/** 構造物座標 */
+export interface StructureCoord {
+  col: number;
+  row: number;
+}
+
+/** マップ設定 */
+export interface MapSettings {
+  tiles: TileConfig[];
+  structureCoords: Record<string, StructureCoord | null>;
+}
+
+// ========================================
 // ゲーム状態
 // ========================================
 
@@ -116,6 +138,7 @@ export interface GameState {
   mode: GameMode;
   players: Player[];
   actions: PlayerAction[];
+  mapSettings: MapSettings;
   createdAt: number;
   updatedAt: number;
 }

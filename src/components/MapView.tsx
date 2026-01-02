@@ -1,6 +1,6 @@
 import { useState, useMemo, useContext } from 'react';
 import { HexMap } from './HexMap';
-import { DEFAULT_MAP_CONFIG, type MapConfig } from '../data/map-tiles';
+import { type MapConfig } from '../data/map-tiles';
 import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, TileIcon } from './Icons';
 import { GameContext } from '../context/GameContext';
 import type { StructureColor } from '../types';
@@ -17,68 +17,41 @@ const STRUCTURE_DEFS = [
   { id: 'shack-black', type: 'shack' as const, color: 'black' as StructureColor, label: '廃墟', colorLabel: '黒', icon: WhiteShackIcon, colorClass: 'text-gray-800' },
 ];
 
-// 座標の型（未設定はnull）
-type Coord = { col: number; row: number } | null;
-
 export function MapView() {
   const game = useContext(GameContext);
-  const isAdvanced = game?.state.mode === 'advanced';
+  if (!game) return null;
 
-  const [tileConfig, setTileConfig] = useState(DEFAULT_MAP_CONFIG.tiles);
+  const { state, setTiles, setStructureCoord } = game;
+  const isAdvanced = state.mode === 'advanced';
+  const tileConfig = state.mapSettings.tiles;
+  const structureCoords = state.mapSettings.structureCoords;
+
+  // UI状態（永続化不要）
   const [showTiles, setShowTiles] = useState(true);
   const [showStones, setShowStones] = useState(true);
   const [showShacks, setShowShacks] = useState(true);
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
+  const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
 
   // 回転ボタンのハンドラ
   const rotateClockwise = () => {
     setRotation((prev) => ((prev + 90) % 360) as 0 | 90 | 180 | 270);
   };
 
-  // 各構造物の座標を個別に管理
-  const [structureCoords, setStructureCoords] = useState<Record<string, Coord>>({
-    'stone-green': null,
-    'stone-blue': null,
-    'stone-white': null,
-    'stone-black': null,
-    'shack-green': null,
-    'shack-blue': null,
-    'shack-white': null,
-    'shack-black': null,
-  });
-
-  // 現在選択中の構造物（マップクリックで座標を設定する対象）
-  const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
-
   // タイル設定を更新
   const updateTile = (index: number, tileId: number, reversed: boolean) => {
-    setTileConfig((prev) =>
-      prev.map((t, i) => (i === index ? { tileId, reversed } : t))
-    );
+    const newTiles = tileConfig.map((t, i) => (i === index ? { tileId, reversed } : t));
+    setTiles(newTiles);
   };
 
-  // 構造物の座標を更新（同じマスの他の構造物はクリア）
+  // 構造物の座標を更新
   const updateStructureCoord = (id: string, col: number, row: number) => {
-    setStructureCoords((prev) => {
-      const newCoords = { ...prev };
-      // 同じ座標の他の構造物をクリア
-      Object.keys(newCoords).forEach((key) => {
-        if (key !== id && newCoords[key]?.col === col && newCoords[key]?.row === row) {
-          newCoords[key] = null;
-        }
-      });
-      // 対象の構造物を更新
-      newCoords[id] = { col, row };
-      return newCoords;
-    });
+    setStructureCoord(id, { col, row });
   };
 
   // 構造物の座標をクリア
   const clearStructureCoord = (id: string) => {
-    setStructureCoords((prev) => ({
-      ...prev,
-      [id]: null,
-    }));
+    setStructureCoord(id, null);
   };
 
   // マップクリック時のハンドラ

@@ -1,5 +1,5 @@
 import { createContext, useReducer, useEffect, type ReactNode } from 'react'
-import type { GameState, Player, PlayerAction, GameMode, PlayerColor, CellInfo } from '../types'
+import type { GameState, Player, PlayerAction, GameMode, PlayerColor, CellInfo, TileConfig, StructureCoord } from '../types'
 import { getAllHintIds } from '../data'
 import { eliminateHints } from '../logic/elimination'
 
@@ -17,15 +17,41 @@ type GameReducerAction =
   | { type: 'TOGGLE_HINT'; payload: { playerId: string; hintId: string } }
   | { type: 'RESET_GAME' }
   | { type: 'LOAD_STATE'; payload: GameState }
+  | { type: 'SET_TILES'; payload: TileConfig[] }
+  | { type: 'SET_STRUCTURE_COORD'; payload: { id: string; coord: StructureCoord | null } }
 
 // ========================================
 // Initial State
 // ========================================
 
+const DEFAULT_TILES: TileConfig[] = [
+  { tileId: 1, reversed: false },
+  { tileId: 2, reversed: false },
+  { tileId: 3, reversed: false },
+  { tileId: 4, reversed: false },
+  { tileId: 5, reversed: false },
+  { tileId: 6, reversed: false },
+]
+
+const DEFAULT_STRUCTURE_COORDS: Record<string, StructureCoord | null> = {
+  'stone-green': null,
+  'stone-blue': null,
+  'stone-white': null,
+  'stone-black': null,
+  'shack-green': null,
+  'shack-blue': null,
+  'shack-white': null,
+  'shack-black': null,
+}
+
 const createInitialState = (): GameState => ({
   mode: 'normal',
   players: [],
   actions: [],
+  mapSettings: {
+    tiles: DEFAULT_TILES,
+    structureCoords: DEFAULT_STRUCTURE_COORDS,
+  },
   createdAt: Date.now(),
   updatedAt: Date.now(),
 })
@@ -157,6 +183,42 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
     case 'LOAD_STATE':
       return action.payload
 
+    case 'SET_TILES':
+      return {
+        ...state,
+        mapSettings: {
+          ...state.mapSettings,
+          tiles: action.payload,
+        },
+        updatedAt: Date.now(),
+      }
+
+    case 'SET_STRUCTURE_COORD': {
+      const { id, coord } = action.payload
+      const newStructureCoords = { ...state.mapSettings.structureCoords }
+
+      // 同じ座標の他の構造物をクリア
+      if (coord) {
+        Object.keys(newStructureCoords).forEach((key) => {
+          const existing = newStructureCoords[key]
+          if (key !== id && existing?.col === coord.col && existing?.row === coord.row) {
+            newStructureCoords[key] = null
+          }
+        })
+      }
+
+      newStructureCoords[id] = coord
+
+      return {
+        ...state,
+        mapSettings: {
+          ...state.mapSettings,
+          structureCoords: newStructureCoords,
+        },
+        updatedAt: Date.now(),
+      }
+    }
+
     default:
       return state
   }
@@ -178,6 +240,9 @@ interface GameContextValue {
   undoAction: () => void
   toggleHint: (playerId: string, hintId: string) => void
   resetGame: () => void
+  // Map settings
+  setTiles: (tiles: TileConfig[]) => void
+  setStructureCoord: (id: string, coord: StructureCoord | null) => void
 }
 
 export const GameContext = createContext<GameContextValue | null>(null)
@@ -223,6 +288,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     undoAction: () => dispatch({ type: 'UNDO_ACTION' }),
     toggleHint: (playerId, hintId) => dispatch({ type: 'TOGGLE_HINT', payload: { playerId, hintId } }),
     resetGame: () => dispatch({ type: 'RESET_GAME' }),
+    setTiles: (tiles) => dispatch({ type: 'SET_TILES', payload: tiles }),
+    setStructureCoord: (id, coord) => dispatch({ type: 'SET_STRUCTURE_COORD', payload: { id, coord } }),
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>
