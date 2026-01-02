@@ -159,7 +159,10 @@ export function MapView() {
       {/* タイル設定 */}
       {showTiles && (
         <div className="bg-white rounded-xl shadow p-4">
-          <h4 className="font-medium text-gray-600 text-sm mb-2">タイル配置</h4>
+          <h4 className="font-medium text-gray-600 text-sm mb-2 flex items-center gap-1">
+            <TileIcon className="w-4 h-4" />
+            タイル配置
+          </h4>
           <div className="grid grid-cols-2 gap-1">
             {tileConfig.map((tile, index) => (
               <div key={index} className="flex items-center justify-center gap-2 text-sm bg-gray-50 rounded p-1.5">
@@ -195,7 +198,10 @@ export function MapView() {
       {/* 構造物設定 */}
       {showStructures && (
         <div className="bg-white rounded-xl shadow p-4">
-          <h4 className="font-medium text-gray-600 text-sm mb-2">構造物</h4>
+          <h4 className="font-medium text-gray-600 text-sm mb-2 flex items-center gap-1">
+            <GreenStoneIcon className="w-4 h-4" />
+            構造物
+          </h4>
           <div className="space-y-1">
             {STRUCTURE_DEFS.map((def) => {
               const coord = structureCoords[def.id];
