@@ -162,7 +162,7 @@ function hintMatchesFilter(hint: Hint, filterType: FilterType, filterValue: Filt
 }
 
 export function GameBoard() {
-  const { state, toggleHint, addPlayer, removePlayer, resetGame, setMode } = useGame()
+  const { state, toggleHint, addPlayer, removePlayer } = useGame()
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(state.players[0]?.id || '')
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
@@ -220,13 +220,6 @@ export function GameBoard() {
     if (selectedPlayerId === playerId) {
       const remaining = state.players.filter((p) => p.id !== playerId)
       setSelectedPlayerId(remaining[0]?.id || '')
-    }
-  }
-
-  const handleReset = () => {
-    if (window.confirm('全てリセットしますか？')) {
-      resetGame()
-      setSelectedPlayerId('')
     }
   }
 
@@ -327,35 +320,6 @@ export function GameBoard() {
           </div>
         )}
       </div>
-
-      {/* モード選択（プレイヤーがいない時） */}
-      {state.players.length === 0 && (
-        <div className="bg-white rounded-xl shadow p-4 mb-3">
-          <h3 className="font-bold text-gray-700 text-sm mb-2">難易度</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMode('normal')}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                state.mode === 'normal'
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              ノーマル
-            </button>
-            <button
-              onClick={() => setMode('advanced')}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                state.mode === 'advanced'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              上級
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* フィルターバー */}
       {selectedPlayer && (
@@ -532,18 +496,6 @@ export function GameBoard() {
             className="px-4 py-2 bg-emerald-500 text-white rounded-lg"
           >
             + プレイヤー追加
-          </button>
-        </div>
-      )}
-
-      {/* リセットボタン */}
-      {state.players.length > 0 && (
-        <div className="pt-8 pb-4">
-          <button
-            onClick={handleReset}
-            className="w-full py-2 text-red-500 text-sm hover:bg-red-50 rounded-lg transition-colors"
-          >
-            リセット
           </button>
         </div>
       )}

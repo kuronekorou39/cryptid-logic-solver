@@ -15,9 +15,9 @@ export function Header() {
   }
 
   return (
-    <header className={`${isAdvanced ? 'bg-gray-800' : 'bg-emerald-700'} text-white py-2 px-4 flex items-center justify-between transition-colors`}>
+    <header className={`${isAdvanced ? 'bg-gray-800' : 'bg-emerald-700'} text-white py-2 px-4 flex items-center transition-colors`}>
       <h1 className="font-bold">Cryptid Solver</h1>
-      <div className="flex items-center gap-3">
+      <div className="flex-1 flex justify-center">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMode('normal')}
@@ -40,14 +40,14 @@ export function Header() {
             上級
           </button>
         </div>
-        <button
-          onClick={handleReset}
-          className="px-2 py-0.5 text-sm rounded bg-transparent text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          title="すべてリセット"
-        >
-          リセット
-        </button>
       </div>
+      <button
+        onClick={handleReset}
+        className="px-2 py-0.5 text-sm rounded bg-transparent text-red-300 hover:text-red-100 hover:bg-red-500/20 transition-colors"
+        title="すべてリセット"
+      >
+        リセット
+      </button>
     </header>
   )
 }
