@@ -122,8 +122,8 @@ export function MapView() {
                       className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs"
                     >
                       <span className={colorClass[s.color]}>{icon}</span>
-                      <span className={colorClass[s.color]}>{colorLabel[s.color]}</span>
                       <span>{s.type === 'stone' ? '巨石' : '廃墟'}</span>
+                      <span className={colorClass[s.color]}>{colorLabel[s.color]}</span>
                       <span className="text-gray-500">{String.fromCharCode(65 + s.col)}{s.row + 1}</span>
                       <button
                         onClick={() => removeStructure(s.col, s.row)}
