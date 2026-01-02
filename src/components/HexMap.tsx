@@ -198,8 +198,8 @@ export function HexMap({ config, highlightedCells, onCellClick }: HexMapProps) {
     <svg
       width="100%"
       viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-      className="max-w-full"
-      style={{ background: '#1f2937' }}
+      className="max-w-full select-none"
+      style={{ background: '#1f2937', userSelect: 'none' }}
     >
       {/* 背景 */}
       <rect x="25" y="5" width={svgWidth - 50} height={svgHeight - 10} fill="#f5f5dc" rx="8" />

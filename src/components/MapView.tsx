@@ -20,6 +20,19 @@ export function MapView() {
 
   const [showSetup, setShowSetup] = useState(true);
 
+  // 構造物入力用の座標（マップクリックで更新可能）
+  const [inputCol, setInputCol] = useState(0);
+  const [inputRow, setInputRow] = useState(0);
+
+  // マップクリック時のハンドラ
+  const handleCellClick = (col: number, row: number) => {
+    setInputCol(col);
+    setInputRow(row);
+  };
+
+  // ハイライトするセル
+  const highlightedCells = new Set([`${inputCol}-${inputRow}`]);
+
   // タイル設定を更新
   const updateTile = (index: number, tileId: number, reversed: boolean) => {
     setMapConfig((prev) => ({
@@ -97,7 +110,13 @@ export function MapView() {
           {/* 構造物配置 */}
           <div>
             <h4 className="font-medium text-gray-600 text-sm mb-2">構造物</h4>
-            <StructureInput onAdd={addStructure} />
+            <StructureInput
+              onAdd={addStructure}
+              col={inputCol}
+              row={inputRow}
+              onColChange={setInputCol}
+              onRowChange={setInputRow}
+            />
             {mapConfig.structures.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {mapConfig.structures.map((s, i) => {
@@ -142,7 +161,11 @@ export function MapView() {
 
       {/* マップ表示 */}
       <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
-        <HexMap config={mapConfig} />
+        <HexMap
+          config={mapConfig}
+          highlightedCells={highlightedCells}
+          onCellClick={handleCellClick}
+        />
       </div>
     </div>
   );
@@ -151,13 +174,19 @@ export function MapView() {
 // 構造物入力フォーム
 function StructureInput({
   onAdd,
+  col,
+  row,
+  onColChange,
+  onRowChange,
 }: {
   onAdd: (structure: StructurePlacement) => void;
+  col: number;
+  row: number;
+  onColChange: (col: number) => void;
+  onRowChange: (row: number) => void;
 }) {
   const [type, setType] = useState<'stone' | 'shack'>('stone');
   const [color, setColor] = useState<StructureColor>('green');
-  const [col, setCol] = useState(0);
-  const [row, setRow] = useState(0);
 
   const handleAdd = () => {
     onAdd({ type, color, col, row });
@@ -213,7 +242,7 @@ function StructureInput({
       <div className="flex items-center gap-1">
         <select
           value={col}
-          onChange={(e) => setCol(parseInt(e.target.value))}
+          onChange={(e) => onColChange(parseInt(e.target.value))}
           className="border rounded px-1.5 py-1 w-12"
         >
           {columns.map((c, i) => (
@@ -222,7 +251,7 @@ function StructureInput({
         </select>
         <select
           value={row}
-          onChange={(e) => setRow(parseInt(e.target.value))}
+          onChange={(e) => onRowChange(parseInt(e.target.value))}
           className="border rounded px-1.5 py-1 w-12"
         >
           {rows.map((r) => (
