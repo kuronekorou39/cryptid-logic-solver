@@ -99,11 +99,16 @@ export interface PlayerAction {
   timestamp: number;
 }
 
+/** プレイヤーシンボル */
+export type PlayerSymbol = 'α' | 'β' | 'γ' | 'δ' | 'ε';
+
 /** プレイヤー */
 export interface Player {
   id: string;
-  name: string;
+  symbol: PlayerSymbol;
+  name: string;  // カスタム名（空文字の場合はシンボルを表示）
   color: PlayerColor;
+  enabled: boolean;  // このプレイヤーを使用するか
   possibleHintIds: string[]; // 可能性のあるヒントIDリスト
 }
 

@@ -1,6 +1,6 @@
 import { createContext, useReducer, useEffect, type ReactNode } from 'react'
-import type { GameState, Player, PlayerAction, GameMode, PlayerColor, CellInfo, TileConfig, StructureCoord } from '../types'
-import { getAllHintIds } from '../data'
+import type { GameState, Player, PlayerAction, GameMode, CellInfo, TileConfig, StructureCoord } from '../types'
+import { getAllHintIds, PLAYER_COLORS } from '../data'
 import { eliminateHints } from '../logic/elimination'
 
 // ========================================
@@ -9,8 +9,8 @@ import { eliminateHints } from '../logic/elimination'
 
 type GameReducerAction =
   | { type: 'SET_MODE'; payload: GameMode }
-  | { type: 'ADD_PLAYER'; payload: { name: string; color: PlayerColor } }
-  | { type: 'REMOVE_PLAYER'; payload: string }
+  | { type: 'TOGGLE_PLAYER'; payload: string }  // playerId
+  | { type: 'SET_PLAYER_NAME'; payload: { playerId: string; name: string } }
   | { type: 'START_GAME' }
   | { type: 'RECORD_ACTION'; payload: Omit<PlayerAction, 'id' | 'timestamp'> }
   | { type: 'UNDO_ACTION' }
@@ -44,9 +44,21 @@ const DEFAULT_STRUCTURE_COORDS: Record<string, StructureCoord | null> = {
   'shack-black': null,
 }
 
+// 固定の5プレイヤーを生成
+const createDefaultPlayers = (mode: GameMode): Player[] => {
+  return PLAYER_COLORS.map((info) => ({
+    id: info.symbol,  // シンボルをIDとして使用
+    symbol: info.symbol,
+    name: '',  // デフォルトは空（シンボルを表示）
+    color: info.color,
+    enabled: false,  // 初期状態では全員無効
+    possibleHintIds: getAllHintIds(mode),
+  }))
+}
+
 const createInitialState = (): GameState => ({
   mode: 'normal',
-  players: [],
+  players: createDefaultPlayers('normal'),
   actions: [],
   mapSettings: {
     tiles: DEFAULT_TILES,
@@ -62,33 +74,56 @@ const createInitialState = (): GameState => ({
 
 function gameReducer(state: GameState, action: GameReducerAction): GameState {
   switch (action.type) {
-    case 'SET_MODE':
+    case 'SET_MODE': {
+      // モード変更時、全プレイヤーのヒント候補を更新
+      const newMode = action.payload
+      const updatedPlayers = state.players.map((player) => ({
+        ...player,
+        possibleHintIds: getAllHintIds(newMode),
+      }))
       return {
         ...state,
-        mode: action.payload,
-        updatedAt: Date.now(),
-      }
-
-    case 'ADD_PLAYER': {
-      const newPlayer: Player = {
-        id: crypto.randomUUID(),
-        name: action.payload.name,
-        color: action.payload.color,
-        possibleHintIds: getAllHintIds(state.mode),
-      }
-      return {
-        ...state,
-        players: [...state.players, newPlayer],
+        mode: newMode,
+        players: updatedPlayers,
+        actions: [],  // アクション履歴もクリア
         updatedAt: Date.now(),
       }
     }
 
-    case 'REMOVE_PLAYER':
+    case 'TOGGLE_PLAYER': {
+      const playerId = action.payload
+      const updatedPlayers = state.players.map((player) => {
+        if (player.id === playerId) {
+          return {
+            ...player,
+            enabled: !player.enabled,
+            // 有効化時にヒント候補をリセット
+            possibleHintIds: !player.enabled ? getAllHintIds(state.mode) : player.possibleHintIds,
+          }
+        }
+        return player
+      })
       return {
         ...state,
-        players: state.players.filter((p) => p.id !== action.payload),
+        players: updatedPlayers,
         updatedAt: Date.now(),
       }
+    }
+
+    case 'SET_PLAYER_NAME': {
+      const { playerId, name } = action.payload
+      const updatedPlayers = state.players.map((player) => {
+        if (player.id === playerId) {
+          return { ...player, name }
+        }
+        return player
+      })
+      return {
+        ...state,
+        players: updatedPlayers,
+        updatedAt: Date.now(),
+      }
+    }
 
     case 'START_GAME':
       return {
@@ -258,8 +293,8 @@ interface GameContextValue {
   dispatch: React.Dispatch<GameReducerAction>
   // Helper functions
   setMode: (mode: GameMode) => void
-  addPlayer: (name: string, color: PlayerColor) => void
-  removePlayer: (playerId: string) => void
+  togglePlayer: (playerId: string) => void
+  setPlayerName: (playerId: string, name: string) => void
   startGame: () => void
   recordAction: (playerId: string, type: 'cube' | 'disc', coordinate: string, cellInfo: CellInfo) => void
   undoAction: () => void
@@ -290,6 +325,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(STORAGE_KEY)
           return createInitialState()
         }
+        // プレイヤーデータが新形式（5人固定、symbol/enabled付き）か確認
+        if (parsed.players.length !== 5 || !parsed.players[0]?.symbol) {
+          localStorage.removeItem(STORAGE_KEY)
+          return createInitialState()
+        }
         return parsed
       }
     } catch {
@@ -312,8 +352,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     state,
     dispatch,
     setMode: (mode) => dispatch({ type: 'SET_MODE', payload: mode }),
-    addPlayer: (name, color) => dispatch({ type: 'ADD_PLAYER', payload: { name, color } }),
-    removePlayer: (playerId) => dispatch({ type: 'REMOVE_PLAYER', payload: playerId }),
+    togglePlayer: (playerId) => dispatch({ type: 'TOGGLE_PLAYER', payload: playerId }),
+    setPlayerName: (playerId, name) => dispatch({ type: 'SET_PLAYER_NAME', payload: { playerId, name } }),
     startGame: () => dispatch({ type: 'START_GAME' }),
     recordAction: (playerId, type, coordinate, cellInfo) =>
       dispatch({ type: 'RECORD_ACTION', payload: { playerId, type, coordinate, cellInfo } }),

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useGame } from '../hooks/useGame'
-import { getHintsByMode, PLAYER_COLOR_MAP, PLAYER_COLORS, PLAYER_COUNT } from '../data'
+import { getHintsByMode, PLAYER_COLOR_MAP } from '../data'
 import {
   ForestIcon, DesertIcon, SwampIcon, MountainIcon, WaterIcon,
   BearIcon, EagleIcon, AnimalIcon,
@@ -20,7 +20,7 @@ const terrainIcons: Record<TerrainType, { icon: React.ReactNode; color: string }
 // 動物アイコンマップ
 const animalIcons: Record<AnimalType, { icon: React.ReactNode; color: string }> = {
   bear: { icon: <BearIcon />, color: 'text-amber-700' },
-  cougar: { icon: <EagleIcon />, color: 'text-orange-600' }, // cougar -> ワシ
+  cougar: { icon: <EagleIcon />, color: 'text-orange-600' },
 }
 
 // 構造物アイコンマップ
@@ -36,7 +36,6 @@ function getHintIcons(hint: Hint): React.ReactNode[] {
   const { condition } = hint
   const icons: React.ReactNode[] = []
 
-  // 地形
   if (condition.terrains) {
     condition.terrains.forEach((t, i) => {
       const info = terrainIcons[t]
@@ -48,7 +47,6 @@ function getHintIcons(hint: Hint): React.ReactNode[] {
     })
   }
 
-  // 動物
   if (condition.animals) {
     condition.animals.forEach((a, i) => {
       const info = animalIcons[a]
@@ -67,27 +65,21 @@ function getHintIcons(hint: Hint): React.ReactNode[] {
     )
   }
 
-  // 構造物
   if (condition.structureColors) {
     const colors = condition.structureColors
-    // 巨石（緑+青）
     if (colors.includes('green') && colors.includes('blue') && colors.length === 2) {
       icons.push(
         <span key="stone" className="text-teal-600">
           <GreenStoneIcon />
         </span>
       )
-    }
-    // 廃墟（白+黒）
-    else if (colors.includes('white') && colors.includes('black') && colors.length === 2) {
+    } else if (colors.includes('white') && colors.includes('black') && colors.length === 2) {
       icons.push(
         <span key="shack" className="text-gray-600">
           <WhiteShackIcon />
         </span>
       )
-    }
-    // 個別の色
-    else {
+    } else {
       colors.forEach((c, i) => {
         const info = structureIcons[c]
         icons.push(
@@ -109,24 +101,10 @@ function getHintIcons(hint: Hint): React.ReactNode[] {
   return icons
 }
 
-// タブの薄い背景色を取得
-function getTabBgClass(color: string, isSelected: boolean) {
-  if (isSelected) return ''
-  const lightColors: Record<string, string> = {
-    red: 'bg-red-100',
-    blue: 'bg-blue-100',
-    green: 'bg-green-100',
-    yellow: 'bg-yellow-100',
-    purple: 'bg-purple-100',
-  }
-  return lightColors[color] || 'bg-gray-100'
-}
-
 // フィルター用の型
 type FilterType = 'terrain' | 'animal' | 'structure'
 type FilterValue = TerrainType | AnimalType | StructureColor | 'anyAnimal' | 'anyStructure' | 'stone' | 'shack'
 
-// ヒントがフィルターにマッチするか判定
 function hintMatchesFilter(hint: Hint, filterType: FilterType, filterValue: FilterValue): boolean {
   const { condition } = hint
 
@@ -145,12 +123,10 @@ function hintMatchesFilter(hint: Hint, filterType: FilterType, filterValue: Filt
     if (filterValue === 'anyStructure') {
       return condition.anyStructure === true
     }
-    // 巨石（緑+青）
     if (filterValue === 'stone') {
       const colors = condition.structureColors
       return !!(colors && colors.includes('green') && colors.includes('blue') && colors.length === 2)
     }
-    // 廃墟（白+黒）
     if (filterValue === 'shack') {
       const colors = condition.structureColors
       return !!(colors && colors.includes('white') && colors.includes('black') && colors.length === 2)
@@ -162,15 +138,16 @@ function hintMatchesFilter(hint: Hint, filterType: FilterType, filterValue: Filt
 }
 
 export function GameBoard() {
-  const { state, toggleHint, addPlayer, removePlayer } = useGame()
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>(state.players[0]?.id || '')
-  const [isAddingPlayer, setIsAddingPlayer] = useState(false)
-  const [newPlayerName, setNewPlayerName] = useState('')
+  const { state, toggleHint, togglePlayer, setPlayerName } = useGame()
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>(state.players[0]?.id || 'α')
   const [activeFilters, setActiveFilters] = useState<{ type: FilterType; value: FilterValue }[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [tempName, setTempName] = useState('')
 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
+  const enabledPlayersCount = state.players.filter((p) => p.enabled).length
 
   // フィルター適用
   let filteredHints = activeFilters.length === 0
@@ -186,7 +163,6 @@ export function GameBoard() {
     )
   }
 
-  // フィルターのトグル
   const toggleFilter = (type: FilterType, value: FilterValue) => {
     setActiveFilters((prev) => {
       const exists = prev.some((f) => f.type === type && f.value === value)
@@ -202,28 +178,20 @@ export function GameBoard() {
 
   const clearFilters = () => setActiveFilters([])
 
-  const usedColors = state.players.map((p) => p.color)
-  const availableColors = PLAYER_COLORS.filter((c) => !usedColors.includes(c.color))
-  const canAddPlayer = state.players.length < PLAYER_COUNT.MAX && availableColors.length > 0
-
-  const handleAddPlayer = () => {
-    if (!newPlayerName.trim() || !canAddPlayer) return
-    const color = availableColors[0].color
-    addPlayer(newPlayerName.trim(), color)
-    setNewPlayerName('')
-    setIsAddingPlayer(false)
-  }
-
-  const handleRemovePlayer = (playerId: string) => {
-    if (state.players.length <= 1) return
-    removePlayer(playerId)
-    if (selectedPlayerId === playerId) {
-      const remaining = state.players.filter((p) => p.id !== playerId)
-      setSelectedPlayerId(remaining[0]?.id || '')
+  const handleStartEditName = () => {
+    if (selectedPlayer) {
+      setTempName(selectedPlayer.name)
+      setEditingName(true)
     }
   }
 
-  // カテゴリごとにグループ化（フィルター適用後）
+  const handleSaveName = () => {
+    if (selectedPlayer) {
+      setPlayerName(selectedPlayer.id, tempName.trim())
+      setEditingName(false)
+    }
+  }
+
   const hintsByCategory = {
     terrain: filteredHints.filter((h) => h.category === 'terrain'),
     structure: filteredHints.filter((h) => h.category === 'structure'),
@@ -238,91 +206,121 @@ export function GameBoard() {
 
   return (
     <div>
-      {/* 固定タブバー */}
+      {/* 固定5タブ */}
       <div className="sticky top-0 z-10 bg-gray-100 pb-2">
         <div className="flex border-b border-gray-300 bg-white rounded-t-lg overflow-hidden">
           {state.players.map((player) => {
             const colorInfo = PLAYER_COLOR_MAP[player.color]
             const isSelected = selectedPlayerId === player.id
+            const displayName = player.name || player.symbol
             const remainingCount = player.possibleHintIds.length
-            const tabBg = isSelected ? colorInfo.bgClass : getTabBgClass(player.color, isSelected)
 
             return (
               <button
                 key={player.id}
                 onClick={() => setSelectedPlayerId(player.id)}
-                className={`relative flex-1 min-w-0 py-2 px-1 text-center transition-all border-b-2 ${tabBg} ${
+                className={`relative flex-1 min-w-0 py-2 px-1 text-center transition-all border-b-2 ${
                   isSelected
-                    ? 'text-white border-transparent'
-                    : `${colorInfo.textClass} border-transparent hover:opacity-80`
+                    ? `${colorInfo.bgClass} text-white border-transparent`
+                    : player.enabled
+                      ? `bg-white ${colorInfo.textClass} border-transparent hover:opacity-80`
+                      : 'bg-gray-100 text-gray-400 border-transparent'
                 }`}
               >
-                <div className="truncate text-sm font-medium">{player.name}</div>
-                <div className={`text-xs ${isSelected ? 'text-white/80' : 'opacity-60'}`}>
-                  {remainingCount}/{allHints.length}
+                <div className="truncate text-sm font-medium">
+                  {displayName}
                 </div>
-                {/* 削除ボタン */}
-                {isSelected && state.players.length > 1 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleRemovePlayer(player.id)
-                    }}
-                    className="absolute top-0 right-0 w-5 h-5 bg-black/30 text-white rounded-bl text-xs"
-                  >
-                    ×
-                  </button>
+                {player.enabled ? (
+                  <div className={`text-xs ${isSelected ? 'text-white/80' : 'opacity-60'}`}>
+                    {remainingCount}/{allHints.length}
+                  </div>
+                ) : (
+                  <div className="text-xs opacity-50">OFF</div>
                 )}
               </button>
             )
           })}
-
-          {/* 追加タブ */}
-          {canAddPlayer && !isAddingPlayer && (
-            <button
-              onClick={() => setIsAddingPlayer(true)}
-              className="flex-shrink-0 w-12 py-2 bg-gray-100 hover:bg-gray-200 text-gray-500 text-xl font-bold border-b-2 border-transparent"
-            >
-              +
-            </button>
-          )}
         </div>
-
-        {/* 追加フォーム */}
-        {isAddingPlayer && (
-          <div className="flex gap-2 p-2 bg-white border-x border-b border-gray-300 rounded-b-lg">
-            <input
-              type="text"
-              value={newPlayerName}
-              onChange={(e) => setNewPlayerName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
-              placeholder="プレイヤー名"
-              autoFocus
-              maxLength={10}
-              className="flex-1 px-3 py-2 border rounded-lg text-sm"
-            />
-            <button
-              onClick={handleAddPlayer}
-              disabled={!newPlayerName.trim()}
-              className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm disabled:bg-gray-300"
-            >
-              追加
-            </button>
-            <button
-              onClick={() => {
-                setIsAddingPlayer(false)
-                setNewPlayerName('')
-              }}
-              className="px-3 py-2 bg-gray-200 rounded-lg text-sm"
-            >
-              ×
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* フィルターバー */}
+      {/* 選択中プレイヤーの設定 */}
       {selectedPlayer && (
+        <div className="bg-white rounded-xl shadow p-3 mb-3">
+          <div className="flex items-center gap-3">
+            {/* 有効/無効トグル */}
+            <button
+              onClick={() => togglePlayer(selectedPlayer.id)}
+              className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 ${
+                selectedPlayer.enabled ? 'bg-emerald-500' : 'bg-gray-300'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  selectedPlayer.enabled ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+
+            {/* 名前表示/編集 */}
+            <div className="flex-1 min-w-0">
+              {editingName ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                    placeholder={selectedPlayer.symbol}
+                    maxLength={10}
+                    autoFocus
+                    className="flex-1 px-2 py-1 border rounded text-sm"
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    className="px-3 py-1 bg-emerald-500 text-white rounded text-sm"
+                  >
+                    OK
+                  </button>
+                  <button
+                    onClick={() => setEditingName(false)}
+                    className="px-2 py-1 bg-gray-200 rounded text-sm"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleStartEditName}
+                  className="text-left w-full"
+                >
+                  <span className="text-sm font-medium">
+                    {selectedPlayer.name || selectedPlayer.symbol}
+                  </span>
+                  {!selectedPlayer.name && (
+                    <span className="text-xs text-gray-400 ml-2">名前を設定</span>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* 有効プレイヤー数 */}
+            <div className="text-xs text-gray-500 flex-shrink-0">
+              {enabledPlayersCount}人参加
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* プレイヤーが無効の場合のメッセージ */}
+      {selectedPlayer && !selectedPlayer.enabled && (
+        <div className="bg-white rounded-xl shadow p-8 text-center text-gray-500">
+          <p className="mb-2">このプレイヤーは参加していません</p>
+          <p className="text-sm">上のスイッチをONにして参加させてください</p>
+        </div>
+      )}
+
+      {/* フィルターバー（有効なプレイヤーのみ表示） */}
+      {selectedPlayer?.enabled && (
         <div className="bg-white rounded-xl shadow p-3 mb-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500 font-medium">絞り込み</span>
@@ -336,7 +334,6 @@ export function GameBoard() {
             )}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {/* 地形フィルター */}
             {(['forest', 'desert', 'swamp', 'mountain', 'water'] as TerrainType[]).map((t) => {
               const info = terrainIcons[t]
               const active = isFilterActive('terrain', t)
@@ -356,7 +353,6 @@ export function GameBoard() {
               )
             })}
             <span className="w-px bg-gray-300 mx-1" />
-            {/* 動物フィルター */}
             {(['bear', 'cougar'] as AnimalType[]).map((a) => {
               const info = animalIcons[a]
               const active = isFilterActive('animal', a)
@@ -375,7 +371,6 @@ export function GameBoard() {
               )
             })}
             <span className="w-px bg-gray-300 mx-1" />
-            {/* 構造物フィルター - 巨石・廃墟・個別色 */}
             <button
               onClick={() => toggleFilter('structure', 'stone')}
               className={`p-1.5 rounded-lg transition-all ${
@@ -416,7 +411,6 @@ export function GameBoard() {
               )
             })}
           </div>
-          {/* OFF非表示トグル */}
           <div className="mt-3 pt-2 border-t border-gray-200 flex items-center justify-between">
             <span className="text-xs text-gray-500">OFFを非表示</span>
             <button
@@ -440,8 +434,8 @@ export function GameBoard() {
         </div>
       )}
 
-      {/* ヒントリスト */}
-      {selectedPlayer ? (
+      {/* ヒントリスト（有効なプレイヤーのみ表示） */}
+      {selectedPlayer?.enabled && (
         <div className="space-y-3">
           {Object.entries(hintsByCategory)
             .filter(([, hints]) => hints.length > 0)
@@ -487,16 +481,6 @@ export function GameBoard() {
               </div>
             </div>
           ))}
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow p-8 text-center text-gray-500 mt-2">
-          <p className="mb-4">プレイヤーを追加してください</p>
-          <button
-            onClick={() => setIsAddingPlayer(true)}
-            className="px-4 py-2 bg-emerald-500 text-white rounded-lg"
-          >
-            + プレイヤー追加
-          </button>
         </div>
       )}
     </div>

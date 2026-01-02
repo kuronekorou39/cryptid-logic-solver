@@ -3,6 +3,7 @@ import type {
   StructureColor,
   AnimalType,
   PlayerColor,
+  PlayerSymbol,
   TerrainInfo,
   StructureInfo,
   AnimalInfo,
@@ -65,24 +66,27 @@ export const ANIMAL_MAP: Record<AnimalType, AnimalInfo> = {
 // ========================================
 
 export interface PlayerColorInfo {
+  symbol: PlayerSymbol;
   color: PlayerColor;
   label: string;
   bgClass: string;
   textClass: string;
 }
 
+// プレイヤー定義（固定の5種類）
+// α:赤, β:緑, γ:青, δ:黄, ε:紫
 export const PLAYER_COLORS: PlayerColorInfo[] = [
-  { color: 'red', label: '赤', bgClass: 'bg-red-500', textClass: 'text-red-500' },
-  { color: 'blue', label: '青', bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
-  { color: 'green', label: '緑', bgClass: 'bg-green-500', textClass: 'text-green-500' },
-  { color: 'yellow', label: '黄', bgClass: 'bg-yellow-500', textClass: 'text-yellow-500' },
-  { color: 'purple', label: '紫', bgClass: 'bg-purple-500', textClass: 'text-purple-500' },
+  { symbol: 'α', color: 'red', label: '赤', bgClass: 'bg-red-500', textClass: 'text-red-500' },
+  { symbol: 'β', color: 'green', label: '緑', bgClass: 'bg-green-500', textClass: 'text-green-500' },
+  { symbol: 'γ', color: 'blue', label: '青', bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
+  { symbol: 'δ', color: 'yellow', label: '黄', bgClass: 'bg-yellow-500', textClass: 'text-yellow-500' },
+  { symbol: 'ε', color: 'purple', label: '紫', bgClass: 'bg-purple-500', textClass: 'text-purple-500' },
 ];
 
 export const PLAYER_COLOR_MAP: Record<PlayerColor, PlayerColorInfo> = {
   red: PLAYER_COLORS[0],
-  blue: PLAYER_COLORS[1],
-  green: PLAYER_COLORS[2],
+  green: PLAYER_COLORS[1],
+  blue: PLAYER_COLORS[2],
   yellow: PLAYER_COLORS[3],
   purple: PLAYER_COLORS[4],
 };
