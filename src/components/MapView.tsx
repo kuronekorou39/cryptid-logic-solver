@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useContext } from 'react';
 import { HexMap } from './HexMap';
 import { DEFAULT_MAP_CONFIG, type MapConfig } from '../data/map-tiles';
 import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, TileIcon } from './Icons';
+import { GameContext } from '../context/GameContext';
 import type { StructureColor } from '../types';
 
 // 8つの構造物定義（巨石4色 + 廃墟4色）
@@ -20,6 +21,9 @@ const STRUCTURE_DEFS = [
 type Coord = { col: number; row: number } | null;
 
 export function MapView() {
+  const game = useContext(GameContext);
+  const isAdvanced = game?.state.mode === 'advanced';
+
   const [tileConfig, setTileConfig] = useState(DEFAULT_MAP_CONFIG.tiles);
   const [showTiles, setShowTiles] = useState(true);
   const [showStones, setShowStones] = useState(true);
@@ -88,6 +92,7 @@ export function MapView() {
   const mapConfig: MapConfig = useMemo(() => {
     const structures = STRUCTURE_DEFS
       .filter((def) => structureCoords[def.id] !== null)
+      .filter((def) => isAdvanced || def.color !== 'black')
       .map((def) => ({
         type: def.type,
         color: def.color,
@@ -99,7 +104,7 @@ export function MapView() {
       tiles: tileConfig,
       structures,
     };
-  }, [tileConfig, structureCoords]);
+  }, [tileConfig, structureCoords, isAdvanced]);
 
   // ハイライトするセル（選択中の構造物の座標）
   const highlightedCells = useMemo(() => {
@@ -219,7 +224,7 @@ export function MapView() {
             巨石
           </h4>
           <div className="space-y-1">
-            {STRUCTURE_DEFS.filter((def) => def.type === 'stone').map((def) => {
+            {STRUCTURE_DEFS.filter((def) => def.type === 'stone' && (isAdvanced || def.color !== 'black')).map((def) => {
               const coord = structureCoords[def.id];
               const isSelected = selectedStructure === def.id;
               const Icon = def.icon;
@@ -293,7 +298,7 @@ export function MapView() {
             廃墟
           </h4>
           <div className="space-y-1">
-            {STRUCTURE_DEFS.filter((def) => def.type === 'shack').map((def) => {
+            {STRUCTURE_DEFS.filter((def) => def.type === 'shack' && (isAdvanced || def.color !== 'black')).map((def) => {
               const coord = structureCoords[def.id];
               const isSelected = selectedStructure === def.id;
               const Icon = def.icon;

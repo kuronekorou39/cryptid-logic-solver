@@ -1,7 +1,38 @@
+import { useContext } from 'react'
+import { GameContext } from '../context/GameContext'
+
 export function Header() {
+  const game = useContext(GameContext)
+  if (!game) return null
+
+  const { state, setMode } = game
+  const isAdvanced = state.mode === 'advanced'
+
   return (
-    <header className="bg-emerald-700 text-white py-2 px-4">
-      <h1 className="text-center font-bold">Cryptid Solver</h1>
+    <header className={`${isAdvanced ? 'bg-gray-800' : 'bg-emerald-700'} text-white py-2 px-4 flex items-center justify-between transition-colors`}>
+      <h1 className="font-bold">Cryptid Solver</h1>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setMode('normal')}
+          className={`px-2 py-0.5 text-sm rounded transition-colors ${
+            !isAdvanced
+              ? 'bg-white text-emerald-700 font-medium'
+              : 'bg-transparent text-white/70 hover:text-white'
+          }`}
+        >
+          通常
+        </button>
+        <button
+          onClick={() => setMode('advanced')}
+          className={`px-2 py-0.5 text-sm rounded transition-colors ${
+            isAdvanced
+              ? 'bg-white text-gray-800 font-medium'
+              : 'bg-transparent text-white/70 hover:text-white'
+          }`}
+        >
+          上級
+        </button>
+      </div>
     </header>
   )
 }
