@@ -147,7 +147,7 @@ function AnimalMarker({ animal, x, y }: { animal: AnimalType; x: number; y: numb
     <polygon
       points={getInnerHexPoints(x, y, innerSize)}
       fill={color}
-      opacity={0.4}
+      opacity={0.7}
       stroke={color}
       strokeWidth={2}
     />
