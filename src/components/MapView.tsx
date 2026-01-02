@@ -197,7 +197,7 @@ export function MapView() {
                     const val = e.target.value;
                     updateTile(index, val === '' ? null : parseInt(val), tile.reversed);
                   }}
-                  className={`border rounded px-2 py-1 w-14 ${tile.tileId === null ? 'text-gray-400' : 'text-gray-900 font-medium'}`}
+                  className={`border rounded px-2 py-1 w-14 bg-white ${tile.tileId === null ? 'text-gray-400' : 'text-gray-900 font-medium'}`}
                 >
                   <option value="">-</option>
                   {[1, 2, 3, 4, 5, 6].map((id) => (
