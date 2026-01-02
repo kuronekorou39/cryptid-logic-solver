@@ -63,37 +63,41 @@ export function MapView() {
       {showSetup && (
         <div className="bg-white rounded-xl shadow p-4 space-y-4">
           <h3 className="font-bold text-gray-700">タイル配置</h3>
-          <div className="grid grid-cols-3 gap-2">
-            {mapConfig.tiles.map((tile, index) => (
-              <div key={index} className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500 w-8">
-                  {index < 3 ? '上' : '下'}{['左', '中', '右'][index % 3]}:
-                </span>
-                <select
-                  value={tile.tileId}
-                  onChange={(e) =>
-                    updateTile(index, parseInt(e.target.value), tile.reversed)
-                  }
-                  className="border rounded px-2 py-1 w-16"
-                >
-                  {[1, 2, 3, 4, 5, 6].map((id) => (
-                    <option key={id} value={id}>
-                      {id}
-                    </option>
-                  ))}
-                </select>
-                <label className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={tile.reversed}
+          <div className="grid grid-cols-2 gap-2">
+            {mapConfig.tiles.map((tile, index) => {
+              const rowLabel = ['上', '中', '下'][Math.floor(index / 2)];
+              const colLabel = index % 2 === 0 ? '左' : '右';
+              return (
+                <div key={index} className="flex items-center gap-2 text-sm bg-gray-50 rounded p-2">
+                  <span className="text-gray-500 w-8 font-medium">
+                    {rowLabel}{colLabel}
+                  </span>
+                  <select
+                    value={tile.tileId}
                     onChange={(e) =>
-                      updateTile(index, tile.tileId, e.target.checked)
+                      updateTile(index, parseInt(e.target.value), tile.reversed)
                     }
-                  />
-                  <span className="text-xs">逆</span>
-                </label>
-              </div>
-            ))}
+                    className="border rounded px-2 py-1 w-16"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((id) => (
+                      <option key={id} value={id}>
+                        {id}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={tile.reversed}
+                      onChange={(e) =>
+                        updateTile(index, tile.tileId, e.target.checked)
+                      }
+                    />
+                    <span className="text-xs">逆</span>
+                  </label>
+                </div>
+              );
+            })}
           </div>
 
           {/* 構造物配置 */}
@@ -137,29 +141,27 @@ function StructureInput({
 }) {
   const [type, setType] = useState<'stone' | 'shack'>('stone');
   const [color, setColor] = useState<StructureColor>('green');
-  const [coord, setCoord] = useState('');
+  const [col, setCol] = useState(0);
+  const [row, setRow] = useState(0);
+
+  // タイプ変更時に色をリセット
+  const handleTypeChange = (newType: 'stone' | 'shack') => {
+    setType(newType);
+    setColor(newType === 'stone' ? 'green' : 'white');
+  };
 
   const handleAdd = () => {
-    const match = coord.toUpperCase().match(/^([A-L])([1-9])$/);
-    if (!match) {
-      alert('座標形式が正しくありません（例: A1, L9）');
-      return;
-    }
-    const col = match[1].charCodeAt(0) - 65;
-    const row = parseInt(match[2], 10) - 1;
-    if (col > 11 || row > 8) {
-      alert('座標が範囲外です（A-L, 1-9）');
-      return;
-    }
     onAdd({ type, color, col, row });
-    setCoord('');
   };
+
+  const columns = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i)); // A-L
+  const rows = Array.from({ length: 9 }, (_, i) => i + 1); // 1-9
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <select
         value={type}
-        onChange={(e) => setType(e.target.value as 'stone' | 'shack')}
+        onChange={(e) => handleTypeChange(e.target.value as 'stone' | 'shack')}
         className="border rounded px-2 py-1"
       >
         <option value="stone">巨石</option>
@@ -182,14 +184,26 @@ function StructureInput({
           </>
         )}
       </select>
-      <input
-        type="text"
-        value={coord}
-        onChange={(e) => setCoord(e.target.value)}
-        placeholder="座標 (例: A1)"
-        className="border rounded px-2 py-1 w-20"
-        maxLength={2}
-      />
+      <div className="flex items-center gap-1">
+        <select
+          value={col}
+          onChange={(e) => setCol(parseInt(e.target.value))}
+          className="border rounded px-2 py-1 w-14"
+        >
+          {columns.map((c, i) => (
+            <option key={c} value={i}>{c}</option>
+          ))}
+        </select>
+        <select
+          value={row}
+          onChange={(e) => setRow(parseInt(e.target.value))}
+          className="border rounded px-2 py-1 w-14"
+        >
+          {rows.map((r) => (
+            <option key={r} value={r - 1}>{r}</option>
+          ))}
+        </select>
+      </div>
       <button
         onClick={handleAdd}
         className="px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600"
