@@ -27,9 +27,22 @@ export function MapView() {
   const structureCoords = state.mapSettings.structureCoords;
 
   // UI状態（永続化不要）
-  const [showTiles, setShowTiles] = useState(true);
-  const [showStones, setShowStones] = useState(true);
-  const [showShacks, setShowShacks] = useState(true);
+  // 初期状態: 未入力項目がある場合のみ表示
+  const [showTiles, setShowTiles] = useState(() => {
+    return state.mapSettings.tiles.some((t) => t.tileId === null);
+  });
+  const [showStones, setShowStones] = useState(() => {
+    const isAdv = state.mode === 'advanced';
+    return STRUCTURE_DEFS
+      .filter((def) => def.type === 'stone' && (isAdv || def.color !== 'black'))
+      .some((def) => state.mapSettings.structureCoords[def.id] === null);
+  });
+  const [showShacks, setShowShacks] = useState(() => {
+    const isAdv = state.mode === 'advanced';
+    return STRUCTURE_DEFS
+      .filter((def) => def.type === 'shack' && (isAdv || def.color !== 'black'))
+      .some((def) => state.mapSettings.structureCoords[def.id] === null);
+  });
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
 
