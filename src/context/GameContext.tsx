@@ -259,10 +259,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
-        return JSON.parse(saved) as GameState
+        const parsed = JSON.parse(saved) as GameState
+        // データ構造が不正な場合はクリアして初期化
+        if (!parsed.mapSettings?.tiles || !parsed.mapSettings?.structureCoords) {
+          localStorage.removeItem(STORAGE_KEY)
+          return createInitialState()
+        }
+        return parsed
       }
     } catch {
-      // 復元失敗時は初期状態を使用
+      // 復元失敗時はクリアして初期状態を使用
+      localStorage.removeItem(STORAGE_KEY)
     }
     return createInitialState()
   })
