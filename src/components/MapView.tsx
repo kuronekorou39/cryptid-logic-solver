@@ -3,7 +3,8 @@ import { HexMap } from './HexMap';
 import { type MapConfig } from '../data/map-tiles';
 import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, TileIcon } from './Icons';
 import { GameContext } from '../context/GameContext';
-import type { StructureColor } from '../types';
+import { PLAYER_COLORS } from '../data';
+import type { StructureColor, MarkerType } from '../types';
 
 // 8つの構造物定義（巨石4色 + 廃墟4色）
 const STRUCTURE_DEFS = [
@@ -21,10 +22,11 @@ export function MapView() {
   const game = useContext(GameContext);
   if (!game) return null;
 
-  const { state, setTiles, setStructureCoord } = game;
+  const { state, setTiles, setStructureCoord, setMarker } = game;
   const isAdvanced = state.mode === 'advanced';
   const tileConfig = state.mapSettings.tiles;
   const structureCoords = state.mapSettings.structureCoords;
+  const playerMarkers = state.playerMarkers;
 
   // UI状態（永続化不要）
   // 初期状態: 未入力項目がある場合のみ表示
@@ -45,6 +47,7 @@ export function MapView() {
   });
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
+  const [markerPlayerId, setMarkerPlayerId] = useState<string | null>(null);  // マーカー配置中のプレイヤー
 
   // 回転ボタンのハンドラ
   const rotateClockwise = () => {
@@ -71,6 +74,24 @@ export function MapView() {
   const handleCellClick = (col: number, row: number) => {
     if (selectedStructure) {
       updateStructureCoord(selectedStructure, col, row);
+      return;
+    }
+
+    if (markerPlayerId) {
+      // マーカー配置モード: none → disc → cube → none とサイクル
+      const cellKey = `${col}-${row}`;
+      const currentMarker = playerMarkers[markerPlayerId]?.[cellKey] as MarkerType | undefined;
+
+      let nextMarker: MarkerType | null;
+      if (!currentMarker) {
+        nextMarker = 'disc';
+      } else if (currentMarker === 'disc') {
+        nextMarker = 'cube';
+      } else {
+        nextMarker = null;
+      }
+
+      setMarker(markerPlayerId, cellKey, nextMarker);
     }
   };
 
@@ -124,6 +145,7 @@ export function MapView() {
               highlightedCells={highlightedCells}
               onCellClick={handleCellClick}
               rotation={rotation}
+              playerMarkers={playerMarkers}
             />
           </div>
           {/* 右側ボタン群（上寄せ） */}
@@ -177,6 +199,30 @@ export function MapView() {
                 </span>
               )}
             </button>
+
+            {/* プレイヤーマーカーボタン */}
+            <div className="w-10 border-t border-gray-300 my-1" />
+            {state.players.filter(p => p.enabled).map((player) => {
+              const colorInfo = PLAYER_COLORS.find(c => c.symbol === player.symbol);
+              const isActive = markerPlayerId === player.id;
+              return (
+                <button
+                  key={player.id}
+                  onClick={() => {
+                    setMarkerPlayerId(isActive ? null : player.id);
+                    setSelectedStructure(null);  // 構造物選択を解除
+                  }}
+                  className={`w-10 h-10 rounded-lg transition-colors flex items-center justify-center text-lg font-bold ${
+                    isActive
+                      ? `${colorInfo?.bgClass || 'bg-gray-500'} text-white ring-2 ring-offset-1 ring-amber-400`
+                      : `bg-gray-100 hover:bg-gray-200 ${colorInfo?.textClass || 'text-gray-600'}`
+                  }`}
+                  title={`${player.name || player.symbol}のマーカー配置`}
+                >
+                  {player.symbol}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -255,7 +301,10 @@ export function MapView() {
                       ? 'bg-amber-100 ring-2 ring-amber-400'
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
-                  onClick={() => setSelectedStructure(isSelected ? null : def.id)}
+                  onClick={() => {
+                    setSelectedStructure(isSelected ? null : def.id);
+                    setMarkerPlayerId(null);  // マーカーモードを解除
+                  }}
                 >
                   <span className={def.colorClass}>
                     <Icon className="w-5 h-5" />
@@ -334,7 +383,10 @@ export function MapView() {
                       ? 'bg-amber-100 ring-2 ring-amber-400'
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
-                  onClick={() => setSelectedStructure(isSelected ? null : def.id)}
+                  onClick={() => {
+                    setSelectedStructure(isSelected ? null : def.id);
+                    setMarkerPlayerId(null);  // マーカーモードを解除
+                  }}
                 >
                   <span className={def.colorClass}>
                     <Icon className="w-5 h-5" />

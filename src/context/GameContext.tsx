@@ -1,5 +1,5 @@
 import { createContext, useReducer, useEffect, type ReactNode } from 'react'
-import type { GameState, Player, PlayerAction, GameMode, CellInfo, TileConfig, StructureCoord } from '../types'
+import type { GameState, Player, PlayerAction, GameMode, CellInfo, TileConfig, StructureCoord, MarkerType } from '../types'
 import { getAllHintIds, PLAYER_COLORS } from '../data'
 import { eliminateHints } from '../logic/elimination'
 
@@ -19,6 +19,7 @@ type GameReducerAction =
   | { type: 'LOAD_STATE'; payload: GameState }
   | { type: 'SET_TILES'; payload: { tiles: TileConfig[]; changedIndex: number } }
   | { type: 'SET_STRUCTURE_COORD'; payload: { id: string; coord: StructureCoord | null } }
+  | { type: 'SET_MARKER'; payload: { playerId: string; cellKey: string; markerType: MarkerType | null } }
 
 // ========================================
 // Initial State
@@ -64,6 +65,7 @@ const createInitialState = (): GameState => ({
     tiles: DEFAULT_TILES,
     structureCoords: DEFAULT_STRUCTURE_COORDS,
   },
+  playerMarkers: {},  // playerId -> cellKey -> MarkerType
   createdAt: Date.now(),
   updatedAt: Date.now(),
 })
@@ -267,6 +269,34 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
       }
     }
 
+    case 'SET_MARKER': {
+      const { playerId, cellKey, markerType } = action.payload
+      const newMarkers = { ...state.playerMarkers }
+
+      if (!newMarkers[playerId]) {
+        newMarkers[playerId] = {}
+      }
+
+      if (markerType === null) {
+        // マーカーを削除
+        const playerMarkers = { ...newMarkers[playerId] }
+        delete playerMarkers[cellKey]
+        newMarkers[playerId] = playerMarkers
+      } else {
+        // マーカーを設定
+        newMarkers[playerId] = {
+          ...newMarkers[playerId],
+          [cellKey]: markerType,
+        }
+      }
+
+      return {
+        ...state,
+        playerMarkers: newMarkers,
+        updatedAt: Date.now(),
+      }
+    }
+
     default:
       return state
   }
@@ -291,6 +321,8 @@ interface GameContextValue {
   // Map settings
   setTiles: (tiles: TileConfig[], changedIndex: number) => void
   setStructureCoord: (id: string, coord: StructureCoord | null) => void
+  // Markers
+  setMarker: (playerId: string, cellKey: string, markerType: MarkerType | null) => void
 }
 
 export const GameContext = createContext<GameContextValue | null>(null)
@@ -317,6 +349,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (parsed.players.length !== 5 || !parsed.players[0]?.symbol) {
           localStorage.removeItem(STORAGE_KEY)
           return createInitialState()
+        }
+        // playerMarkersがない古いデータには空オブジェクトを設定
+        if (!parsed.playerMarkers) {
+          parsed.playerMarkers = {}
         }
         return parsed
       }
@@ -350,6 +386,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     resetGame: () => dispatch({ type: 'RESET_GAME' }),
     setTiles: (tiles, changedIndex) => dispatch({ type: 'SET_TILES', payload: { tiles, changedIndex } }),
     setStructureCoord: (id, coord) => dispatch({ type: 'SET_STRUCTURE_COORD', payload: { id, coord } }),
+    setMarker: (playerId, cellKey, markerType) => dispatch({ type: 'SET_MARKER', payload: { playerId, cellKey, markerType } }),
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

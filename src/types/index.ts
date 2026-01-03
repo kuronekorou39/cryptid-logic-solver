@@ -134,6 +134,12 @@ export interface MapSettings {
   structureCoords: Record<string, StructureCoord | null>;
 }
 
+/** プレイヤーマーカータイプ */
+export type MarkerType = 'disc' | 'cube';  // disc=いる可能性あり(〇), cube=いない(×)
+
+/** プレイヤーマーカー（playerId -> cellKey -> MarkerType） */
+export type PlayerMarkers = Record<string, Record<string, MarkerType>>;
+
 // ========================================
 // ゲーム状態
 // ========================================
@@ -144,6 +150,7 @@ export interface GameState {
   players: Player[];
   actions: PlayerAction[];
   mapSettings: MapSettings;
+  playerMarkers: PlayerMarkers;  // プレイヤーごとのマーカー配置
   createdAt: number;
   updatedAt: number;
 }

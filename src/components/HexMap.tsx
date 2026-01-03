@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { MAP_TILES, rotateTile180, type MapConfig } from '../data/map-tiles';
-import type { TerrainType, AnimalType, StructureColor } from '../types';
+import type { TerrainType, AnimalType, StructureColor, PlayerMarkers, MarkerType, PlayerColor } from '../types';
 
 // 地形の色（実際のボドゲに近づけて調整）
 const TERRAIN_COLORS: Record<TerrainType, string> = {
@@ -19,11 +19,30 @@ const STRUCTURE_COLORS: Record<StructureColor, string> = {
   black: '#1f2937',  // gray-800
 };
 
+// プレイヤーマーカーの色
+const PLAYER_MARKER_COLORS: Record<PlayerColor, string> = {
+  red: '#dc2626',      // red-600
+  green: '#059669',    // emerald-600
+  blue: '#4f46e5',     // indigo-600
+  yellow: '#d97706',   // amber-600
+  purple: '#c026d3',   // fuchsia-600
+};
+
+// プレイヤーIDから色を取得するマッピング
+const PLAYER_ID_TO_COLOR: Record<string, PlayerColor> = {
+  'α': 'red',
+  'β': 'green',
+  'γ': 'blue',
+  'δ': 'yellow',
+  'ε': 'purple',
+};
+
 interface HexMapProps {
   config: MapConfig;
   highlightedCells?: Set<string>; // "col-row" 形式のセット
   onCellClick?: (col: number, row: number) => void;
   rotation?: 0 | 90 | 180 | 270;
+  playerMarkers?: PlayerMarkers;  // プレイヤーマーカー
 }
 
 // ヘックスのサイズ（flat-top）
@@ -192,6 +211,139 @@ function StructureMarker({
   }
 }
 
+// マーカー位置の計算（1-5個のマーカーを適切に配置）
+function getMarkerPositions(count: number): { dx: number; dy: number }[] {
+  const offset = 7; // 中心からのオフセット
+  switch (count) {
+    case 1:
+      return [{ dx: 0, dy: 0 }];
+    case 2:
+      return [
+        { dx: -offset, dy: 0 },
+        { dx: offset, dy: 0 },
+      ];
+    case 3:
+      return [
+        { dx: 0, dy: -offset },
+        { dx: -offset, dy: offset * 0.6 },
+        { dx: offset, dy: offset * 0.6 },
+      ];
+    case 4:
+      return [
+        { dx: -offset, dy: -offset * 0.6 },
+        { dx: offset, dy: -offset * 0.6 },
+        { dx: -offset, dy: offset * 0.6 },
+        { dx: offset, dy: offset * 0.6 },
+      ];
+    case 5:
+    default:
+      return [
+        { dx: -offset, dy: -offset * 0.6 },
+        { dx: offset, dy: -offset * 0.6 },
+        { dx: 0, dy: 0 },
+        { dx: -offset, dy: offset * 0.6 },
+        { dx: offset, dy: offset * 0.6 },
+      ];
+  }
+}
+
+// プレイヤーマーカーアイコン
+function PlayerMarkerIcon({
+  markerType,
+  color,
+  x,
+  y,
+}: {
+  markerType: MarkerType;
+  color: string;
+  x: number;
+  y: number;
+}) {
+  const size = 4;
+  if (markerType === 'disc') {
+    // disc = 〇 (いる可能性あり)
+    return (
+      <circle
+        cx={x}
+        cy={y}
+        r={size}
+        fill={color}
+        stroke="#fff"
+        strokeWidth={1}
+      />
+    );
+  } else {
+    // cube = × (いない)
+    return (
+      <g>
+        <line
+          x1={x - size}
+          y1={y - size}
+          x2={x + size}
+          y2={y + size}
+          stroke={color}
+          strokeWidth={2.5}
+        />
+        <line
+          x1={x + size}
+          y1={y - size}
+          x2={x - size}
+          y2={y + size}
+          stroke={color}
+          strokeWidth={2.5}
+        />
+      </g>
+    );
+  }
+}
+
+// セルのマーカーを描画
+function CellMarkers({
+  cellKey,
+  x,
+  y,
+  playerMarkers,
+}: {
+  cellKey: string;
+  x: number;
+  y: number;
+  playerMarkers: PlayerMarkers;
+}) {
+  // このセルにあるマーカーを収集（プレイヤー順に）
+  const playerOrder = ['α', 'β', 'γ', 'δ', 'ε'];
+  const markers: { playerId: string; markerType: MarkerType }[] = [];
+
+  for (const playerId of playerOrder) {
+    const playerData = playerMarkers[playerId];
+    if (playerData && playerData[cellKey]) {
+      markers.push({ playerId, markerType: playerData[cellKey] });
+    }
+  }
+
+  if (markers.length === 0) return null;
+
+  const positions = getMarkerPositions(markers.length);
+
+  return (
+    <>
+      {markers.map((marker, index) => {
+        const pos = positions[index];
+        const playerColor = PLAYER_ID_TO_COLOR[marker.playerId];
+        const color = PLAYER_MARKER_COLORS[playerColor];
+        return (
+          <PlayerMarkerIcon
+            key={marker.playerId}
+            markerType={marker.markerType}
+            color={color}
+            x={x + pos.dx}
+            y={y + pos.dy}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 // タイル番号ラベルの位置（セットアップカード風）
 function getTileLabels(config: MapConfig): { x: number; y: number; label: string; position: string }[] {
   const labels: { x: number; y: number; label: string; position: string }[] = [];
@@ -217,7 +369,7 @@ function getTileLabels(config: MapConfig): { x: number; y: number; label: string
   return labels;
 }
 
-export function HexMap({ config, highlightedCells, onCellClick, rotation = 0 }: HexMapProps) {
+export function HexMap({ config, highlightedCells, onCellClick, rotation = 0, playerMarkers }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
@@ -308,6 +460,16 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0 }: 
                   color={cell.structure.color}
                   x={x}
                   y={y}
+                />
+              )}
+
+              {/* プレイヤーマーカー */}
+              {playerMarkers && (
+                <CellMarkers
+                  cellKey={cellKey}
+                  x={x}
+                  y={y}
+                  playerMarkers={playerMarkers}
                 />
               )}
             </g>
