@@ -8,6 +8,7 @@ import { calculatePossibleCells } from '../logic/possible-cells';
 
 interface MapViewProps {
   selectedPlayerId: string;
+  showPossibleCells: boolean;
 }
 
 // 8つの構造物定義（巨石4色 + 廃墟4色）
@@ -22,7 +23,7 @@ const STRUCTURE_DEFS = [
   { id: 'shack-black', type: 'shack' as const, color: 'black' as StructureColor, label: '廃墟', colorLabel: '黒', icon: WhiteShackIcon, colorClass: 'text-gray-800' },
 ];
 
-export function MapView({ selectedPlayerId }: MapViewProps) {
+export function MapView({ selectedPlayerId, showPossibleCells }: MapViewProps) {
   const game = useContext(GameContext);
   if (!game) return null;
 
@@ -56,7 +57,6 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
   const [showAllPlayers, setShowAllPlayers] = useState(false);  // 全プレイヤーの可能セルを表示
-  const [showPossibleCells, setShowPossibleCells] = useState(true);  // 可能セルの色付け表示
 
   // 回転ボタンのハンドラ
   const rotateClockwise = () => {
@@ -264,17 +264,6 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
               )}
             </button>
             {/* 表示オプション */}
-            <button
-              onClick={() => setShowPossibleCells(!showPossibleCells)}
-              className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors ${
-                showPossibleCells
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              title="可能セルの色付け表示切替"
-            >
-              色
-            </button>
             <button
               onClick={() => setShowAllPlayers(!showAllPlayers)}
               className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors ${

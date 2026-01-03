@@ -190,9 +190,11 @@ function getHintSortKey(hint: Hint): string {
 interface GameBoardProps {
   selectedPlayerId: string
   onSelectPlayer: (playerId: string) => void
+  showPossibleCells: boolean
+  onToggleShowPossibleCells: () => void
 }
 
-export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) {
+export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells, onToggleShowPossibleCells }: GameBoardProps) {
   const { state, toggleHint, togglePlayer, toggleAutoMode, setSelfPlayer, confirmHint, unconfirmHint, getConfirmedHintOwner } = useGame()
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
@@ -379,6 +381,24 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
               <div
                 className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
                   hideOffItems ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+
+            <div className="w-px h-4 bg-gray-300 mx-1" />
+
+            {/* 可能セル色付け表示トグル */}
+            <span className="text-xs text-gray-400">色付け</span>
+            <button
+              onClick={onToggleShowPossibleCells}
+              className={`w-8 h-4 rounded-full relative transition-colors ${
+                showPossibleCells ? 'bg-purple-500' : 'bg-gray-300'
+              }`}
+              title={showPossibleCells ? '可能セルの色付けを非表示にする' : '可能セルの色付けを表示する'}
+            >
+              <div
+                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
+                  showPossibleCells ? 'translate-x-4' : 'translate-x-0.5'
                 }`}
               />
             </button>
