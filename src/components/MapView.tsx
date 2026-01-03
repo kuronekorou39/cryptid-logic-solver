@@ -185,8 +185,8 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
   const columns = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
   const rows = Array.from({ length: 9 }, (_, i) => i + 1);
 
-  // 構造物設定モード中かどうか（巨石/廃墟パネルが開いている）
-  const isStructureEditMode = showStones || showShacks;
+  // 構造物配置モード中かどうか（具体的な構造物を選択してマス選択状態）
+  const isStructureEditMode = selectedStructure !== null;
 
   return (
     <div className="space-y-3 select-none">
