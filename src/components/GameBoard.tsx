@@ -307,7 +307,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
             {/* 参加解除ボタン */}
             <button
               onClick={() => togglePlayer(selectedPlayer.id)}
-              className="text-gray-300 hover:text-red-400 text-xs transition-colors"
+              className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 text-lg font-bold rounded transition-colors"
               title="参加解除"
             >
               ×
