@@ -189,7 +189,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) {
-  const { state, toggleHint, togglePlayer } = useGame()
+  const { state, toggleHint, togglePlayer, toggleAutoMode } = useGame()
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
 
@@ -299,6 +299,24 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
             </button>
 
             <div className="flex-1" />
+
+            {/* 自動モードトグル */}
+            <span className="text-xs text-gray-400">自動</span>
+            <button
+              onClick={toggleAutoMode}
+              className={`w-8 h-4 rounded-full relative transition-colors ${
+                state.autoMode ? 'bg-blue-500' : 'bg-gray-300'
+              }`}
+              title={state.autoMode ? '自動モード: マーカーに基づいてヒントを自動計算' : '手動モード: ヒントを手動で切り替え'}
+            >
+              <div
+                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
+                  state.autoMode ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+
+            <div className="w-px h-4 bg-gray-300 mx-1" />
 
             {/* OFFを非表示トグル */}
             <span className="text-xs text-gray-400">OFF非表示</span>

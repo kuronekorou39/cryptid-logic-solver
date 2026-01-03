@@ -151,6 +151,7 @@ export interface GameState {
   actions: PlayerAction[];
   mapSettings: MapSettings;
   playerMarkers: PlayerMarkers;  // プレイヤーごとのマーカー配置
+  autoMode: boolean;  // 自動モード: マーカーに基づいてヒントを自動計算
   createdAt: number;
   updatedAt: number;
 }

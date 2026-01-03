@@ -2,6 +2,7 @@ import { createContext, useReducer, useEffect, type ReactNode } from 'react'
 import type { GameState, Player, PlayerAction, GameMode, CellInfo, TileConfig, StructureCoord, MarkerType } from '../types'
 import { getAllHintIds, PLAYER_COLORS } from '../data'
 import { eliminateHints } from '../logic/elimination'
+import { calculateConsistentHints } from '../logic/possible-cells'
 
 // ========================================
 // Actions
@@ -20,6 +21,8 @@ type GameReducerAction =
   | { type: 'SET_TILES'; payload: { tiles: TileConfig[]; changedIndex: number } }
   | { type: 'SET_STRUCTURE_COORD'; payload: { id: string; coord: StructureCoord | null } }
   | { type: 'SET_MARKER'; payload: { playerId: string; cellKey: string; markerType: MarkerType | null } }
+  | { type: 'TOGGLE_AUTO_MODE' }
+  | { type: 'RECALCULATE_HINTS'; payload: { playerId: string } }
 
 // ========================================
 // Initial State
@@ -66,6 +69,7 @@ const createInitialState = (): GameState => ({
     structureCoords: DEFAULT_STRUCTURE_COORDS,
   },
   playerMarkers: {},  // playerId -> cellKey -> MarkerType
+  autoMode: true,     // デフォルトで自動モード
   createdAt: Date.now(),
   updatedAt: Date.now(),
 })
@@ -290,9 +294,75 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
         }
       }
 
+      // 自動モードの場合、ヒントを再計算
+      let updatedPlayers = state.players
+      if (state.autoMode) {
+        const playerMarkersForCalc = newMarkers[playerId] || {}
+        const consistentHints = calculateConsistentHints(
+          state.mapSettings.tiles,
+          state.mapSettings.structureCoords,
+          playerMarkersForCalc,
+          state.mode
+        )
+        updatedPlayers = state.players.map(p =>
+          p.id === playerId
+            ? { ...p, possibleHintIds: consistentHints }
+            : p
+        )
+      }
+
       return {
         ...state,
+        players: updatedPlayers,
         playerMarkers: newMarkers,
+        updatedAt: Date.now(),
+      }
+    }
+
+    case 'TOGGLE_AUTO_MODE': {
+      const newAutoMode = !state.autoMode
+
+      // 自動モードをONにした場合、全有効プレイヤーのヒントを再計算
+      let updatedPlayers = state.players
+      if (newAutoMode) {
+        updatedPlayers = state.players.map(player => {
+          if (!player.enabled) return player
+          const playerMarkers = state.playerMarkers[player.id] || {}
+          const consistentHints = calculateConsistentHints(
+            state.mapSettings.tiles,
+            state.mapSettings.structureCoords,
+            playerMarkers,
+            state.mode
+          )
+          return { ...player, possibleHintIds: consistentHints }
+        })
+      }
+
+      return {
+        ...state,
+        autoMode: newAutoMode,
+        players: updatedPlayers,
+        updatedAt: Date.now(),
+      }
+    }
+
+    case 'RECALCULATE_HINTS': {
+      const { playerId } = action.payload
+      const playerMarkers = state.playerMarkers[playerId] || {}
+      const consistentHints = calculateConsistentHints(
+        state.mapSettings.tiles,
+        state.mapSettings.structureCoords,
+        playerMarkers,
+        state.mode
+      )
+      const updatedPlayers = state.players.map(p =>
+        p.id === playerId
+          ? { ...p, possibleHintIds: consistentHints }
+          : p
+      )
+      return {
+        ...state,
+        players: updatedPlayers,
         updatedAt: Date.now(),
       }
     }
@@ -323,6 +393,8 @@ interface GameContextValue {
   setStructureCoord: (id: string, coord: StructureCoord | null) => void
   // Markers
   setMarker: (playerId: string, cellKey: string, markerType: MarkerType | null) => void
+  // Auto mode
+  toggleAutoMode: () => void
 }
 
 export const GameContext = createContext<GameContextValue | null>(null)
@@ -353,6 +425,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // playerMarkersがない古いデータには空オブジェクトを設定
         if (!parsed.playerMarkers) {
           parsed.playerMarkers = {}
+        }
+        // autoModeがない古いデータにはデフォルト値を設定
+        if (parsed.autoMode === undefined) {
+          parsed.autoMode = true
         }
         return parsed
       }
@@ -387,6 +463,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setTiles: (tiles, changedIndex) => dispatch({ type: 'SET_TILES', payload: { tiles, changedIndex } }),
     setStructureCoord: (id, coord) => dispatch({ type: 'SET_STRUCTURE_COORD', payload: { id, coord } }),
     setMarker: (playerId, cellKey, markerType) => dispatch({ type: 'SET_MARKER', payload: { playerId, cellKey, markerType } }),
+    toggleAutoMode: () => dispatch({ type: 'TOGGLE_AUTO_MODE' }),
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

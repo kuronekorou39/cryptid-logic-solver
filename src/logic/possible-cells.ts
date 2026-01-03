@@ -1,5 +1,6 @@
-import type { Hint, TileConfig, StructureCoord } from '../types'
-import { getHintById } from '../data'
+import type { Hint, TileConfig, StructureCoord, MarkerType } from '../types'
+import { getHintById, getHintsByMode } from '../data'
+import type { GameMode } from '../types'
 import {
   buildMapGrid,
   cellKey,
@@ -146,4 +147,60 @@ export function getMapGrid(
   structureCoords: Record<string, StructureCoord | null>
 ): MapGrid {
   return buildMapGrid(tiles, structureCoords)
+}
+
+/**
+ * マーカーに基づいて矛盾しないヒントIDを計算
+ *
+ * ○ (disc) があるセル → そのセルでFALSEになるヒントを除外
+ * × (cube) があるセル → そのセルでTRUEになるヒントを除外
+ *
+ * @returns 全マーカーと矛盾しないヒントIDの配列
+ */
+export function calculateConsistentHints(
+  tiles: TileConfig[],
+  structureCoords: Record<string, StructureCoord | null>,
+  markers: Record<string, MarkerType>,  // cellKey -> MarkerType
+  mode: GameMode
+): string[] {
+  const grid = buildMapGrid(tiles, structureCoords)
+  const allHints = getHintsByMode(mode)
+
+  // マップが未完成なら全ヒントを返す
+  const allTilesSet = tiles.every(t => t.tileId !== null)
+  if (!allTilesSet) {
+    return allHints.map(h => h.id)
+  }
+
+  // マーカーがなければ全ヒントを返す
+  const markerEntries = Object.entries(markers)
+  if (markerEntries.length === 0) {
+    return allHints.map(h => h.id)
+  }
+
+  // 各ヒントがマーカーと矛盾しないかチェック
+  return allHints
+    .filter(hint => {
+      for (const [cellKeyStr, markerType] of markerEntries) {
+        const [colStr, rowStr] = cellKeyStr.split('-')
+        const col = parseInt(colStr, 10)
+        const row = parseInt(rowStr, 10)
+
+        const hintResult = evaluateHintOnMap(hint, grid, col, row)
+
+        if (markerType === 'disc') {
+          // ○: このセルにいる可能性あり → ヒントがTRUEを返すべき
+          if (!hintResult) {
+            return false  // 矛盾: ヒントはこのセルを不可としている
+          }
+        } else if (markerType === 'cube') {
+          // ×: このセルにいない → ヒントがFALSEを返すべき
+          if (hintResult) {
+            return false  // 矛盾: ヒントはこのセルを可能としている
+          }
+        }
+      }
+      return true  // 全マーカーと矛盾なし
+    })
+    .map(h => h.id)
 }
