@@ -8,7 +8,7 @@ const TERRAIN_COLORS: Record<TerrainType, string> = {
   desert: '#fde047',   // yellow-300（明るい黄）
   swamp: '#7e22ce',    // purple-700（深い紫）
   mountain: '#d1d5db', // gray-300（明るいグレー）
-  water: '#7dd3fc',    // sky-300（明るい水色）
+  water: '#0369a1',    // sky-700（濃い青）
 };
 
 // 構造物の色（地形と区別しやすいように調整）
@@ -23,7 +23,7 @@ const STRUCTURE_COLORS: Record<StructureColor, string> = {
 const PLAYER_MARKER_COLORS: Record<PlayerColor, string> = {
   red: '#dc2626',      // red-600
   green: '#059669',    // emerald-600
-  blue: '#4f46e5',     // indigo-600
+  blue: '#0ea5e9',     // sky-500（明るい水色）
   yellow: '#d97706',   // amber-600
   purple: '#c026d3',   // fuchsia-600
 };
