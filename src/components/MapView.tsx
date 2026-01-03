@@ -185,6 +185,9 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
   const columns = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
   const rows = Array.from({ length: 9 }, (_, i) => i + 1);
 
+  // 構造物設定モード中かどうか（巨石/廃墟パネルが開いている）
+  const isStructureEditMode = showStones || showShacks;
+
   return (
     <div className="space-y-3 select-none">
       {/* マップ表示（一番上） */}
@@ -195,10 +198,11 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
             <HexMap
               config={mapConfig}
               highlightedCells={highlightedCells}
-              playerPossibleCells={playerPossibleCells}
+              playerPossibleCells={isStructureEditMode ? undefined : playerPossibleCells}
               onCellClick={handleCellClick}
               rotation={rotation}
-              playerMarkers={playerMarkers}
+              playerMarkers={isStructureEditMode ? undefined : playerMarkers}
+              dimmed={isStructureEditMode}
             />
           </div>
           {/* 右側ボタン群（上寄せ） */}

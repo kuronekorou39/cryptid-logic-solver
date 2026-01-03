@@ -54,6 +54,7 @@ interface HexMapProps {
   onCellClick?: (col: number, row: number) => void;
   rotation?: 0 | 90 | 180 | 270;
   playerMarkers?: PlayerMarkers;  // プレイヤーマーカー
+  dimmed?: boolean;  // マップ全体を薄く表示（構造物設定モード時）
 }
 
 // ヘックスのサイズ（flat-top）
@@ -459,7 +460,7 @@ const TERRAIN_PATTERN_IDS: Record<TerrainType, string> = {
   water: 'pattern-water',
 };
 
-export function HexMap({ config, highlightedCells, playerPossibleCells, onCellClick, rotation = 0, playerMarkers }: HexMapProps) {
+export function HexMap({ config, highlightedCells, playerPossibleCells, onCellClick, rotation = 0, playerMarkers, dimmed = false }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
@@ -521,7 +522,8 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
           const hasPossibleCells = playerPossibleCells && playerPossibleCells.some(p => p.cells.size > 0);
 
           // 可能セル表示中はマップ全体を薄く表示（オーバーレイで強調）
-          const dimmed = hasPossibleCells && !isEmpty;
+          // dimmedプロップが指定されている場合は構造物設定モード
+          const cellDimmed = dimmed || (hasPossibleCells && !isEmpty);
 
           return (
             <g
@@ -535,14 +537,14 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                 fill={isEmpty ? '#e5e7eb' : TERRAIN_COLORS[cell.terrain!]}
                 stroke={isHighlighted ? '#fbbf24' : (isEmpty ? '#d1d5db' : '#fff')}
                 strokeWidth={isHighlighted ? 3 : 1}
-                opacity={dimmed ? 0.35 : 1}
+                opacity={cellDimmed ? 0.35 : 1}
               />
               {/* パターンオーバーレイ */}
               {!isEmpty && (
                 <polygon
                   points={getHexPoints(x, y)}
                   fill={`url(#${TERRAIN_PATTERN_IDS[cell.terrain!]})`}
-                  opacity={dimmed ? 0.35 : 1}
+                  opacity={cellDimmed ? 0.35 : 1}
                 />
               )}
               {/* 座標ラベル（デバッグ用、小さく表示） */}
@@ -559,14 +561,14 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
 
               {/* 動物マーカー */}
               {cell.animal && (
-                <g opacity={dimmed ? 0.35 : 1}>
+                <g opacity={cellDimmed ? 0.35 : 1}>
                   <AnimalMarker animal={cell.animal} x={x} y={y} />
                 </g>
               )}
 
               {/* 構造物マーカー */}
               {cell.structure && (
-                <g opacity={dimmed ? 0.35 : 1}>
+                <g opacity={cellDimmed ? 0.35 : 1}>
                   <StructureMarker
                     type={cell.structure.type}
                     color={cell.structure.color}
