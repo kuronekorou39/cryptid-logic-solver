@@ -552,16 +552,22 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
               </text>
 
               {/* 動物マーカー */}
-              {cell.animal && <AnimalMarker animal={cell.animal} x={x} y={y} />}
+              {cell.animal && (
+                <g opacity={dimmed ? 0.35 : 1}>
+                  <AnimalMarker animal={cell.animal} x={x} y={y} />
+                </g>
+              )}
 
               {/* 構造物マーカー */}
               {cell.structure && (
-                <StructureMarker
-                  type={cell.structure.type}
-                  color={cell.structure.color}
-                  x={x}
-                  y={y}
-                />
+                <g opacity={dimmed ? 0.35 : 1}>
+                  <StructureMarker
+                    type={cell.structure.type}
+                    color={cell.structure.color}
+                    x={x}
+                    y={y}
+                  />
+                </g>
               )}
 
               {/* プレイヤーマーカー */}
