@@ -112,15 +112,12 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) {
-  const { state, toggleHint, togglePlayer, setPlayerName } = useGame()
+  const { state, toggleHint, togglePlayer } = useGame()
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
-  const [editingName, setEditingName] = useState(false)
-  const [tempName, setTempName] = useState('')
 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
-  const enabledPlayersCount = state.players.filter((p) => p.enabled).length
 
   // フィルター適用
   let filteredHints = terrainFilters.length === 0
@@ -146,18 +143,13 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
 
   const clearFilters = () => setTerrainFilters([])
 
-  const handleStartEditName = () => {
-    if (selectedPlayer) {
-      setTempName(selectedPlayer.name)
-      setEditingName(true)
+  // タブクリック時: 無効なプレイヤーなら有効化してから選択
+  const handleTabClick = (playerId: string) => {
+    const player = state.players.find(p => p.id === playerId)
+    if (player && !player.enabled) {
+      togglePlayer(playerId)
     }
-  }
-
-  const handleSaveName = () => {
-    if (selectedPlayer) {
-      setPlayerName(selectedPlayer.id, tempName.trim())
-      setEditingName(false)
-    }
+    onSelectPlayer(playerId)
   }
 
   const hintsByCategory = {
@@ -180,30 +172,29 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
           {state.players.map((player) => {
             const colorInfo = PLAYER_COLOR_MAP[player.color]
             const isSelected = selectedPlayerId === player.id
-            const displayName = player.name || player.symbol
             const remainingCount = player.possibleHintIds.length
 
             return (
               <button
                 key={player.id}
-                onClick={() => onSelectPlayer(player.id)}
+                onClick={() => handleTabClick(player.id)}
                 className={`relative flex-1 min-w-0 py-2 px-1 text-center transition-all border-b-2 ${
                   isSelected
                     ? `${colorInfo.bgClass} text-white border-transparent`
                     : player.enabled
                       ? `bg-white ${colorInfo.textClass} border-transparent hover:opacity-80`
-                      : 'bg-gray-100 text-gray-400 border-transparent'
+                      : 'bg-gray-100 text-gray-400 border-transparent hover:bg-gray-200'
                 }`}
               >
                 <div className="truncate text-sm font-medium">
-                  {displayName}
+                  {player.symbol}
                 </div>
                 {player.enabled ? (
                   <div className={`text-xs ${isSelected ? 'text-white/80' : 'opacity-60'}`}>
                     {remainingCount}/{allHints.length}
                   </div>
                 ) : (
-                  <div className="text-xs opacity-50">OFF</div>
+                  <div className="text-xs opacity-50">+参加</div>
                 )}
               </button>
             )
@@ -211,86 +202,20 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
         </div>
       </div>
 
-      {/* 選択中プレイヤーの設定 */}
-      {selectedPlayer && (
-        <div className="bg-white rounded-xl shadow p-3 mb-3">
-          <div className="flex items-center gap-3">
-            {/* 有効/無効トグル */}
-            <button
-              onClick={() => togglePlayer(selectedPlayer.id)}
-              className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 ${
-                selectedPlayer.enabled ? 'bg-emerald-500' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                  selectedPlayer.enabled ? 'translate-x-7' : 'translate-x-1'
-                }`}
-              />
-            </button>
-
-            {/* 名前表示/編集 */}
-            <div className="flex-1 min-w-0">
-              {editingName ? (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                    placeholder={selectedPlayer.symbol}
-                    maxLength={10}
-                    autoFocus
-                    className="flex-1 px-2 py-1 border rounded text-sm"
-                  />
-                  <button
-                    onClick={handleSaveName}
-                    className="px-3 py-1 bg-emerald-500 text-white rounded text-sm"
-                  >
-                    OK
-                  </button>
-                  <button
-                    onClick={() => setEditingName(false)}
-                    className="px-2 py-1 bg-gray-200 rounded text-sm"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handleStartEditName}
-                  className="text-left w-full"
-                >
-                  <span className="text-sm font-medium">
-                    {selectedPlayer.name || selectedPlayer.symbol}
-                  </span>
-                  {!selectedPlayer.name && (
-                    <span className="text-xs text-gray-400 ml-2">名前を設定</span>
-                  )}
-                </button>
-              )}
-            </div>
-
-            {/* 有効プレイヤー数 */}
-            <div className="text-xs text-gray-500 flex-shrink-0">
-              {enabledPlayersCount}人参加
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* プレイヤーが無効の場合のメッセージ */}
-      {selectedPlayer && !selectedPlayer.enabled && (
-        <div className="bg-white rounded-xl shadow p-8 text-center text-gray-500">
-          <p className="mb-2">このプレイヤーは参加していません</p>
-          <p className="text-sm">上のスイッチをONにして参加させてください</p>
-        </div>
-      )}
 
       {/* コンパクトなフィルターバー（有効なプレイヤーのみ表示） */}
       {selectedPlayer?.enabled && (
         <div className="bg-white rounded-xl shadow px-3 py-2 mb-3">
           <div className="flex items-center gap-2">
+            {/* 参加解除ボタン（目立たない） */}
+            <button
+              onClick={() => togglePlayer(selectedPlayer.id)}
+              className="text-gray-300 hover:text-red-400 text-xs px-1 transition-colors"
+              title="参加解除"
+            >
+              ×解除
+            </button>
+            <div className="w-px h-4 bg-gray-200" />
             {/* 地形フィルター（5種類のみ） */}
             <div className="flex gap-1">
               {(['forest', 'desert', 'swamp', 'mountain', 'water'] as TerrainType[]).map((t) => {
