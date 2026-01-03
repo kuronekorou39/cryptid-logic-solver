@@ -404,6 +404,48 @@ function getTileLabels(config: MapConfig): { x: number; y: number; label: string
   return labels;
 }
 
+// 地形パターンの定義（SVG defs用）
+function TerrainPatterns() {
+  return (
+    <defs>
+      {/* 森林: 縦線 */}
+      <pattern id="pattern-forest" patternUnits="userSpaceOnUse" width="4" height="4">
+        <line x1="2" y1="0" x2="2" y2="4" stroke="#000" strokeWidth="0.5" opacity="0.15" />
+      </pattern>
+
+      {/* 砂漠: ドット */}
+      <pattern id="pattern-desert" patternUnits="userSpaceOnUse" width="6" height="6">
+        <circle cx="1" cy="1" r="0.8" fill="#000" opacity="0.1" />
+        <circle cx="4" cy="4" r="0.8" fill="#000" opacity="0.1" />
+      </pattern>
+
+      {/* 沼地: 横の波線 */}
+      <pattern id="pattern-swamp" patternUnits="userSpaceOnUse" width="8" height="4">
+        <path d="M0,2 Q2,0 4,2 T8,2" fill="none" stroke="#000" strokeWidth="0.5" opacity="0.15" />
+      </pattern>
+
+      {/* 山岳: 斜め線 */}
+      <pattern id="pattern-mountain" patternUnits="userSpaceOnUse" width="4" height="4">
+        <line x1="0" y1="4" x2="4" y2="0" stroke="#000" strokeWidth="0.5" opacity="0.12" />
+      </pattern>
+
+      {/* 水辺: 横線 */}
+      <pattern id="pattern-water" patternUnits="userSpaceOnUse" width="6" height="3">
+        <line x1="0" y1="1.5" x2="6" y2="1.5" stroke="#fff" strokeWidth="0.5" opacity="0.2" />
+      </pattern>
+    </defs>
+  );
+}
+
+// 地形タイプからパターンIDを取得
+const TERRAIN_PATTERN_IDS: Record<TerrainType, string> = {
+  forest: 'pattern-forest',
+  desert: 'pattern-desert',
+  swamp: 'pattern-swamp',
+  mountain: 'pattern-mountain',
+  water: 'pattern-water',
+};
+
 export function HexMap({ config, highlightedCells, onCellClick, rotation = 0, playerMarkers }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
@@ -428,6 +470,9 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0, pl
       className="max-w-full select-none"
       style={{ background: '#1f2937', userSelect: 'none' }}
     >
+      {/* パターン定義 */}
+      <TerrainPatterns />
+
       <g transform={`
         translate(${svgWidth / 2}, ${svgHeight / 2})
         rotate(${rotation})
@@ -472,6 +517,14 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0, pl
                 strokeWidth={isHighlighted ? 3 : 1}
                 opacity={isHighlighted === false && highlightedCells ? 0.4 : 1}
               />
+              {/* パターンオーバーレイ */}
+              {!isEmpty && (
+                <polygon
+                  points={getHexPoints(x, y)}
+                  fill={`url(#${TERRAIN_PATTERN_IDS[cell.terrain!]})`}
+                  opacity={isHighlighted === false && highlightedCells ? 0.4 : 1}
+                />
+              )}
 
               {/* 座標ラベル（デバッグ用、小さく表示） */}
               <text
