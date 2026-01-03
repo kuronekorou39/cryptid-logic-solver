@@ -119,11 +119,11 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
 
-  // フィルター適用
+  // フィルター適用（OR条件: 選択した地形のいずれかを含む）
   let filteredHints = terrainFilters.length === 0
     ? allHints
     : allHints.filter((hint) =>
-        terrainFilters.every((t) => hintMatchesTerrain(hint, t))
+        terrainFilters.some((t) => hintMatchesTerrain(hint, t))
       )
 
   // OFFの項目を非表示
@@ -140,8 +140,6 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
         : [...prev, terrain]
     )
   }
-
-  const clearFilters = () => setTerrainFilters([])
 
   // タブクリック時: 無効なプレイヤーなら有効化してから選択
   const handleTabClick = (playerId: string) => {
@@ -270,14 +268,6 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
                         )
                       })}
                     </div>
-                    {terrainFilters.length > 0 && (
-                      <button
-                        onClick={clearFilters}
-                        className="text-xs text-red-400 hover:text-red-600"
-                      >
-                        ×
-                      </button>
-                    )}
                   </>
                 )}
               </div>
