@@ -259,14 +259,14 @@ function PlayerMarkerIcon({
   x: number;
   y: number;
 }) {
-  const size = 4;
   if (markerType === 'disc') {
     // disc = 〇 (いる可能性あり)
+    const radius = 5;
     return (
       <circle
         cx={x}
         cy={y}
-        r={size}
+        r={radius}
         fill={color}
         stroke="#fff"
         strokeWidth={1}
@@ -274,6 +274,7 @@ function PlayerMarkerIcon({
     );
   } else {
     // cube = × (いない)
+    const size = 3;
     return (
       <g>
         {/* 白い枠線（背景） */}
