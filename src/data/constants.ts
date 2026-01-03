@@ -78,7 +78,7 @@ export interface PlayerColorInfo {
 export const PLAYER_COLORS: PlayerColorInfo[] = [
   { symbol: 'α', color: 'red', label: '赤', bgClass: 'bg-red-600', textClass: 'text-red-600' },
   { symbol: 'β', color: 'green', label: '緑', bgClass: 'bg-emerald-600', textClass: 'text-emerald-600' },
-  { symbol: 'γ', color: 'blue', label: '水色', bgClass: 'bg-sky-500', textClass: 'text-sky-500' },
+  { symbol: 'γ', color: 'blue', label: '水色', bgClass: 'bg-cyan-400', textClass: 'text-cyan-500' },
   { symbol: 'δ', color: 'yellow', label: '黄', bgClass: 'bg-amber-500', textClass: 'text-amber-500' },
   { symbol: 'ε', color: 'purple', label: '紫', bgClass: 'bg-fuchsia-500', textClass: 'text-fuchsia-500' },
 ];
