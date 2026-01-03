@@ -277,8 +277,9 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                 }`}
               >
                 <div className="truncate text-sm font-medium flex items-center justify-center gap-0.5">
-                  {hasConfirmedHint && <span title="ヒント確定済み">★</span>}
+                  {isSelf && player.enabled && <span title="自分">👤</span>}
                   {player.symbol}
+                  {hasConfirmedHint && <span title="ヒント確定済み">✓</span>}
                 </div>
                 {player.enabled ? (
                   <div className={`text-xs ${isSelected ? 'text-white/80' : 'opacity-60'}`}>
@@ -286,12 +287,6 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                   </div>
                 ) : (
                   <div className="text-xs opacity-50">+参加</div>
-                )}
-                {/* 自分マーク */}
-                {isSelf && player.enabled && (
-                  <div className={`text-[10px] ${isSelected ? 'text-white/90' : 'text-gray-500'}`}>
-                    自分
-                  </div>
                 )}
               </button>
             )
@@ -323,7 +318,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
               }`}
               title={state.selfPlayerId === selectedPlayer.id ? '自分設定を解除' : 'このプレイヤーを自分として設定'}
             >
-              {state.selfPlayerId === selectedPlayer.id ? '★自分' : '自分'}
+              {state.selfPlayerId === selectedPlayer.id ? '👤自分' : '自分'}
             </button>
 
             {/* 確定ボタン（残り1つで未確定の場合のみ表示） */}
@@ -520,7 +515,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                       {/* このヒントが確定済みマーク */}
                       {isMyConfirmedHint && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-white">
-                          ★確定
+                          ✓確定
                         </span>
                       )}
                     </div>
