@@ -374,14 +374,14 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
               <button
                 onClick={() => setHideOffItems(!hideOffItems)}
                 className={`relative w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
-                  hideOffItems
+                  !hideOffItems
                     ? 'bg-blue-100 text-blue-600'
                     : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
-                title={hideOffItems ? 'OFFのヒントを非表示中' : 'OFFのヒントも表示中'}
+                title={hideOffItems ? 'OFFのヒントを非表示中（クリックで全表示）' : '全ヒント表示中（クリックでOFFを非表示）'}
               >
                 👁
-                {!hideOffItems && (
+                {hideOffItems && (
                   <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <span className="w-6 h-0.5 bg-red-500 rotate-45 rounded" />
                   </span>
