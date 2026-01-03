@@ -119,12 +119,15 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
 
-  // フィルター適用（OR条件: 選択した地形のいずれかを含む）
-  let filteredHints = terrainFilters.length === 0
-    ? allHints
-    : allHints.filter((hint) =>
-        terrainFilters.some((t) => hintMatchesTerrain(hint, t))
-      )
+  // フィルター適用（地形カテゴリのみ、OR条件）
+  let filteredHints = allHints.filter((hint) => {
+    // 地形カテゴリ以外は常に表示
+    if (hint.category !== 'terrain') return true
+    // 地形フィルターが未選択なら全て表示
+    if (terrainFilters.length === 0) return true
+    // 選択した地形のいずれかを含む
+    return terrainFilters.some((t) => hintMatchesTerrain(hint, t))
+  })
 
   // OFFの項目を非表示
   if (hideOffItems && selectedPlayer) {
