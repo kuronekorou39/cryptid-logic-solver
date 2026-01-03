@@ -61,23 +61,7 @@ export interface Hint {
 // マス関連
 // ========================================
 
-/** マスの構造物情報 */
-export interface CellStructure {
-  type: StructureType;
-  color: StructureColor;
-}
-
-/** マス */
-export interface Cell {
-  coordinate: string; // 例: "A1", "B3"
-  row: number; // 0-8 (1-9に対応)
-  col: number; // 0-5 (A-Fに対応)
-  terrain: TerrainType;
-  structure: CellStructure | null;
-  animalTerritory: AnimalType | null;
-}
-
-/** マス情報（入力用の簡易版） */
+/** マス情報（ヒント評価用） */
 export interface CellInfo {
   terrain: TerrainType;
   structureColor: StructureColor | null;
@@ -156,29 +140,4 @@ export interface GameState {
   autoMode: boolean;  // 自動モード: マーカーに基づいてヒントを自動計算
   createdAt: number;
   updatedAt: number;
-}
-
-// ========================================
-// UI用の定数
-// ========================================
-
-/** 地形の表示情報 */
-export interface TerrainInfo {
-  type: TerrainType;
-  label: string;
-  color: string; // Tailwind用
-}
-
-/** 構造物の表示情報 */
-export interface StructureInfo {
-  color: StructureColor;
-  label: string;
-  cssColor: string;
-}
-
-/** 動物の表示情報 */
-export interface AnimalInfo {
-  type: AnimalType;
-  label: string;
-  emoji: string;
 }

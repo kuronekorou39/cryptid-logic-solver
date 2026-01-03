@@ -1,5 +1,5 @@
 import type { Hint, CellInfo, GameMode } from '../types'
-import { getHintsByMode, getHintById } from '../data'
+import { getHintsByMode } from '../data'
 
 /**
  * ヒントがそのマスで成立するかを評価する
@@ -130,11 +130,4 @@ export function eliminateHints(
       return isMatch
     }
   })
-}
-
-/**
- * 指定したヒントIDからHintオブジェクトを取得
- */
-export function getHint(hintId: string): Hint | undefined {
-  return getHintById(hintId)
 }

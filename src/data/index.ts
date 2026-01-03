@@ -5,44 +5,14 @@
  */
 
 // ヒントデータ
-export { hintsNormal, NORMAL_HINT_COUNT } from './hints-normal';
-export { hintsAdvanced, ADVANCED_HINT_COUNT } from './hints-advanced';
+export { hintsNormal } from './hints-normal';
+export { hintsAdvanced } from './hints-advanced';
 
 // マップデータ
-export {
-  MAP_TILES,
-  rotateTile180,
-  DEFAULT_MAP_CONFIG,
-  type MapTile,
-  type TileHex,
-  type MapConfig,
-} from './map-tiles';
+export { MAP_TILES, rotateTile180, type MapConfig } from './map-tiles';
 
-// 定数データ
-export {
-  // 地形
-  TERRAINS,
-  TERRAIN_MAP,
-  // 構造物
-  STRUCTURES,
-  STRUCTURE_MAP,
-  // 動物
-  ANIMALS,
-  ANIMAL_MAP,
-  // プレイヤーカラー
-  PLAYER_COLORS,
-  PLAYER_COLOR_MAP,
-  // 座標
-  COLUMN_LABELS,
-  ROW_LABELS,
-  COLUMN_COUNT,
-  ROW_COUNT,
-  CELL_COUNT,
-  // ゲーム設定
-  PLAYER_COUNT,
-  MAX_DISTANCE,
-} from './constants';
-
+// プレイヤーカラー
+export { PLAYER_COLORS, PLAYER_COLOR_MAP } from './constants';
 export type { PlayerColorInfo } from './constants';
 
 // ========================================

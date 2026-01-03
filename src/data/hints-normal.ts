@@ -181,6 +181,3 @@ export const hintsNormal: Hint[] = [
     condition: { structureColors: ['green'], range: 3 },
   },
 ];
-
-/** ノーマルモードのヒント総数 */
-export const NORMAL_HINT_COUNT = hintsNormal.length;

@@ -212,6 +212,3 @@ export const hintsAdvanced: Hint[] = [
     condition: { structureColors: ['black'], range: 3, negated: true },
   },
 ];
-
-/** アドバンストモード追加ヒント総数 */
-export const ADVANCED_HINT_COUNT = hintsAdvanced.length;

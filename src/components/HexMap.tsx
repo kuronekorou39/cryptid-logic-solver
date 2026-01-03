@@ -611,18 +611,3 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
     </svg>
   );
 }
-
-// 座標ラベルを取得 (A-L, 1-9)
-export function getCellLabel(col: number, row: number): string {
-  return `${String.fromCharCode(65 + col)}${row + 1}`;
-}
-
-// ラベルから座標を取得
-export function parseCellLabel(label: string): { col: number; row: number } | null {
-  const match = label.match(/^([A-L])([1-9])$/i);
-  if (!match) return null;
-  const col = match[1].toUpperCase().charCodeAt(0) - 65;
-  const row = parseInt(match[2], 10) - 1;
-  if (col > 11 || row > 8) return null;
-  return { col, row };
-}
