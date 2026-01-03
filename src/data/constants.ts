@@ -74,13 +74,13 @@ export interface PlayerColorInfo {
 }
 
 // プレイヤー定義（固定の5種類）
-// α:赤, β:緑, γ:青, δ:黄, ε:紫
+// α:赤, β:緑, γ:青, δ:黄, ε:紫（地形色と区別しやすいように調整）
 export const PLAYER_COLORS: PlayerColorInfo[] = [
-  { symbol: 'α', color: 'red', label: '赤', bgClass: 'bg-red-500', textClass: 'text-red-500' },
-  { symbol: 'β', color: 'green', label: '緑', bgClass: 'bg-green-500', textClass: 'text-green-500' },
-  { symbol: 'γ', color: 'blue', label: '青', bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
-  { symbol: 'δ', color: 'yellow', label: '黄', bgClass: 'bg-yellow-500', textClass: 'text-yellow-500' },
-  { symbol: 'ε', color: 'purple', label: '紫', bgClass: 'bg-purple-500', textClass: 'text-purple-500' },
+  { symbol: 'α', color: 'red', label: '赤', bgClass: 'bg-red-600', textClass: 'text-red-600' },
+  { symbol: 'β', color: 'green', label: '緑', bgClass: 'bg-emerald-600', textClass: 'text-emerald-600' },
+  { symbol: 'γ', color: 'blue', label: '青', bgClass: 'bg-indigo-500', textClass: 'text-indigo-500' },
+  { symbol: 'δ', color: 'yellow', label: '黄', bgClass: 'bg-amber-500', textClass: 'text-amber-500' },
+  { symbol: 'ε', color: 'purple', label: '紫', bgClass: 'bg-fuchsia-500', textClass: 'text-fuchsia-500' },
 ];
 
 export const PLAYER_COLOR_MAP: Record<PlayerColor, PlayerColorInfo> = {

@@ -11,10 +11,10 @@ const TERRAIN_COLORS: Record<TerrainType, string> = {
   water: '#3b82f6',    // blue-500
 };
 
-// 構造物の色
+// 構造物の色（地形と区別しやすいように調整）
 const STRUCTURE_COLORS: Record<StructureColor, string> = {
-  green: '#15803d',  // green-700
-  blue: '#1d4ed8',   // blue-700
+  green: '#0d9488',  // teal-600（森と区別するため青緑系）
+  blue: '#4f46e5',   // indigo-600（水辺と区別するため紫寄り）
   white: '#f5f5f5',  // gray-100
   black: '#1f2937',  // gray-800
 };
