@@ -23,6 +23,9 @@ type GameReducerAction =
   | { type: 'SET_MARKER'; payload: { playerId: string; cellKey: string; markerType: MarkerType | null } }
   | { type: 'TOGGLE_AUTO_MODE' }
   | { type: 'RECALCULATE_HINTS'; payload: { playerId: string } }
+  | { type: 'SET_SELF_PLAYER'; payload: string | null }  // playerId or null
+  | { type: 'CONFIRM_HINT'; payload: { playerId: string; hintId: string } }
+  | { type: 'UNCONFIRM_HINT'; payload: string }  // playerId
 
 // ========================================
 // Initial State
@@ -57,6 +60,7 @@ const createDefaultPlayers = (mode: GameMode): Player[] => {
     color: info.color,
     enabled: false,  // 初期状態では全員無効
     possibleHintIds: getAllHintIds(mode),
+    confirmedHintId: null,  // 確定ヒントなし
   }))
 }
 
@@ -70,6 +74,7 @@ const createInitialState = (): GameState => ({
   },
   playerMarkers: {},  // playerId -> cellKey -> MarkerType
   autoMode: true,     // デフォルトで自動モード
+  selfPlayerId: null, // 「自分」未設定
   createdAt: Date.now(),
   updatedAt: Date.now(),
 })
@@ -86,6 +91,7 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
       const updatedPlayers = state.players.map((player) => ({
         ...player,
         possibleHintIds: getAllHintIds(newMode),
+        confirmedHintId: null,  // 確定ヒントもリセット
       }))
       return {
         ...state,
@@ -98,6 +104,9 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
 
     case 'TOGGLE_PLAYER': {
       const playerId = action.payload
+      const playerToToggle = state.players.find(p => p.id === playerId)
+      const willBeEnabled = playerToToggle ? !playerToToggle.enabled : false
+
       const updatedPlayers = state.players.map((player) => {
         if (player.id === playerId) {
           return {
@@ -105,13 +114,22 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
             enabled: !player.enabled,
             // 有効化時にヒント候補をリセット
             possibleHintIds: !player.enabled ? getAllHintIds(state.mode) : player.possibleHintIds,
+            // 無効化時に確定ヒントもリセット
+            confirmedHintId: !player.enabled ? player.confirmedHintId : null,
           }
         }
         return player
       })
+
+      // 無効化されたプレイヤーが「自分」だった場合、selfPlayerIdをクリア
+      const newSelfPlayerId = (!willBeEnabled && state.selfPlayerId === playerId)
+        ? null
+        : state.selfPlayerId
+
       return {
         ...state,
         players: updatedPlayers,
+        selfPlayerId: newSelfPlayerId,
         updatedAt: Date.now(),
       }
     }
@@ -367,6 +385,53 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
       }
     }
 
+    case 'SET_SELF_PLAYER': {
+      const playerId = action.payload
+      return {
+        ...state,
+        selfPlayerId: playerId,
+        updatedAt: Date.now(),
+      }
+    }
+
+    case 'CONFIRM_HINT': {
+      const { playerId, hintId } = action.payload
+      const updatedPlayers = state.players.map(player => {
+        if (player.id === playerId) {
+          // このプレイヤーのヒントを確定
+          return { ...player, confirmedHintId: hintId }
+        } else if (player.enabled) {
+          // 他の有効プレイヤーからこのヒントをOFF
+          return {
+            ...player,
+            possibleHintIds: player.possibleHintIds.filter(id => id !== hintId)
+          }
+        }
+        return player
+      })
+      return {
+        ...state,
+        players: updatedPlayers,
+        updatedAt: Date.now(),
+      }
+    }
+
+    case 'UNCONFIRM_HINT': {
+      const playerId = action.payload
+      const updatedPlayers = state.players.map(player => {
+        if (player.id === playerId) {
+          // 確定を解除（他プレイヤーのヒントは戻さない）
+          return { ...player, confirmedHintId: null }
+        }
+        return player
+      })
+      return {
+        ...state,
+        players: updatedPlayers,
+        updatedAt: Date.now(),
+      }
+    }
+
     default:
       return state
   }
@@ -395,6 +460,12 @@ interface GameContextValue {
   setMarker: (playerId: string, cellKey: string, markerType: MarkerType | null) => void
   // Auto mode
   toggleAutoMode: () => void
+  // Self player
+  setSelfPlayer: (playerId: string | null) => void
+  // Hint confirmation
+  confirmHint: (playerId: string, hintId: string) => void
+  unconfirmHint: (playerId: string) => void
+  getConfirmedHintOwner: (hintId: string) => string | null
 }
 
 export const GameContext = createContext<GameContextValue | null>(null)
@@ -430,6 +501,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (parsed.autoMode === undefined) {
           parsed.autoMode = true
         }
+        // selfPlayerIdがない古いデータにはnullを設定
+        if (parsed.selfPlayerId === undefined) {
+          parsed.selfPlayerId = null
+        }
+        // confirmedHintIdがない古いプレイヤーデータにはnullを設定
+        parsed.players = parsed.players.map(p => ({
+          ...p,
+          confirmedHintId: p.confirmedHintId ?? null
+        }))
         return parsed
       }
     } catch {
@@ -448,6 +528,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [state])
 
+  // ヒントを確定しているプレイヤーIDを取得
+  const getConfirmedHintOwner = (hintId: string): string | null => {
+    const owner = state.players.find(p => p.confirmedHintId === hintId)
+    return owner?.id ?? null
+  }
+
   const value: GameContextValue = {
     state,
     dispatch,
@@ -464,6 +550,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setStructureCoord: (id, coord) => dispatch({ type: 'SET_STRUCTURE_COORD', payload: { id, coord } }),
     setMarker: (playerId, cellKey, markerType) => dispatch({ type: 'SET_MARKER', payload: { playerId, cellKey, markerType } }),
     toggleAutoMode: () => dispatch({ type: 'TOGGLE_AUTO_MODE' }),
+    setSelfPlayer: (playerId) => dispatch({ type: 'SET_SELF_PLAYER', payload: playerId }),
+    confirmHint: (playerId, hintId) => dispatch({ type: 'CONFIRM_HINT', payload: { playerId, hintId } }),
+    unconfirmHint: (playerId) => dispatch({ type: 'UNCONFIRM_HINT', payload: playerId }),
+    getConfirmedHintOwner,
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

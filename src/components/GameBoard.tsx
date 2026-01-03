@@ -193,7 +193,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) {
-  const { state, toggleHint, togglePlayer, toggleAutoMode } = useGame()
+  const { state, toggleHint, togglePlayer, toggleAutoMode, setSelfPlayer, confirmHint, unconfirmHint, getConfirmedHintOwner } = useGame()
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
 
@@ -259,6 +259,8 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
             const colorInfo = PLAYER_COLOR_MAP[player.color]
             const isSelected = selectedPlayerId === player.id
             const remainingCount = player.possibleHintIds.length
+            const isSelf = state.selfPlayerId === player.id
+            const hasConfirmedHint = player.confirmedHintId !== null
 
             return (
               <button
@@ -272,7 +274,8 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
                       : 'bg-gray-100 text-gray-400 border-transparent hover:bg-gray-200'
                 }`}
               >
-                <div className="truncate text-sm font-medium">
+                <div className="truncate text-sm font-medium flex items-center justify-center gap-0.5">
+                  {hasConfirmedHint && <span title="ヒント確定済み">★</span>}
                   {player.symbol}
                 </div>
                 {player.enabled ? (
@@ -281,6 +284,12 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
                   </div>
                 ) : (
                   <div className="text-xs opacity-50">+参加</div>
+                )}
+                {/* 自分マーク */}
+                {isSelf && player.enabled && (
+                  <div className={`text-[10px] ${isSelected ? 'text-white/90' : 'text-gray-500'}`}>
+                    自分
+                  </div>
                 )}
               </button>
             )
@@ -292,7 +301,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
       {/* オプションバー（有効なプレイヤーのみ表示） */}
       {selectedPlayer?.enabled && (
         <div className="bg-white rounded-xl shadow px-3 py-2 mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* 参加解除ボタン（目立たない） */}
             <button
               onClick={() => togglePlayer(selectedPlayer.id)}
@@ -302,7 +311,44 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
               ×解除
             </button>
 
+            {/* 自分設定ボタン */}
+            <button
+              onClick={() => setSelfPlayer(state.selfPlayerId === selectedPlayer.id ? null : selectedPlayer.id)}
+              className={`text-xs px-2 py-0.5 rounded transition-colors ${
+                state.selfPlayerId === selectedPlayer.id
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+              }`}
+              title={state.selfPlayerId === selectedPlayer.id ? '自分設定を解除' : 'このプレイヤーを自分として設定'}
+            >
+              {state.selfPlayerId === selectedPlayer.id ? '★自分' : '自分に設定'}
+            </button>
+
             <div className="flex-1" />
+
+            {/* 確定ボタン（残り1つで未確定の場合のみ表示） */}
+            {selectedPlayer.possibleHintIds.length === 1 && !selectedPlayer.confirmedHintId && (
+              <button
+                onClick={() => confirmHint(selectedPlayer.id, selectedPlayer.possibleHintIds[0])}
+                className="text-xs px-2 py-0.5 rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                title="残り1つのヒントを確定する"
+              >
+                確定する
+              </button>
+            )}
+
+            {/* 確定解除ボタン（確定済みの場合のみ表示） */}
+            {selectedPlayer.confirmedHintId && (
+              <button
+                onClick={() => unconfirmHint(selectedPlayer.id)}
+                className="text-xs px-2 py-0.5 rounded bg-gray-400 text-white hover:bg-gray-500 transition-colors"
+                title="確定を解除する"
+              >
+                確定解除
+              </button>
+            )}
+
+            <div className="w-px h-4 bg-gray-300 mx-1" />
 
             {/* 自動モードトグル */}
             <span className="text-xs text-gray-400">自動</span>
@@ -381,17 +427,25 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
                 {hints.map((hint) => {
                   const isOn = selectedPlayer.possibleHintIds.includes(hint.id)
                   const icons = getHintIcons(hint)
+                  const confirmedOwnerId = getConfirmedHintOwner(hint.id)
+                  const confirmedOwner = confirmedOwnerId ? state.players.find(p => p.id === confirmedOwnerId) : null
+                  const isSelfPlayer = state.selfPlayerId === selectedPlayer.id
+                  const isMyConfirmedHint = selectedPlayer.confirmedHintId === hint.id
+
                   return (
-                    <button
+                    <div
                       key={hint.id}
-                      onClick={() => toggleHint(selectedPlayer.id, hint.id)}
                       className={`w-full text-left px-2 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${
-                        isOn
-                          ? 'bg-emerald-50 text-emerald-800'
-                          : 'bg-gray-100 text-gray-400'
+                        isMyConfirmedHint
+                          ? 'bg-amber-100 text-amber-900 ring-2 ring-amber-400'
+                          : isOn
+                            ? 'bg-emerald-50 text-emerald-800'
+                            : 'bg-gray-100 text-gray-400'
                       }`}
                     >
-                      <div
+                      {/* トグルスイッチ */}
+                      <button
+                        onClick={() => toggleHint(selectedPlayer.id, hint.id)}
                         className={`w-8 h-5 rounded-full relative transition-colors flex-shrink-0 ${
                           isOn ? 'bg-emerald-500' : 'bg-gray-300'
                         }`}
@@ -401,14 +455,51 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
                             isOn ? 'translate-x-3.5' : 'translate-x-0.5'
                           }`}
                         />
-                      </div>
+                      </button>
+
+                      {/* アイコン */}
                       {icons.length > 0 && (
                         <span className={`flex items-center gap-0.5 ${isOn ? '' : 'opacity-40'}`}>
                           {icons}
                         </span>
                       )}
-                      <StyledHintText text={hint.text} isOn={isOn} />
-                    </button>
+
+                      {/* テキスト */}
+                      <span className="flex-1">
+                        <StyledHintText text={hint.text} isOn={isOn} />
+                      </span>
+
+                      {/* 確定マーク（他プレイヤーが確定したヒントの場合） */}
+                      {confirmedOwner && confirmedOwner.id !== selectedPlayer.id && (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded text-white ${PLAYER_COLOR_MAP[confirmedOwner.color].bgClass}`}
+                          title={`${confirmedOwner.symbol}のヒント`}
+                        >
+                          {confirmedOwner.symbol}
+                        </span>
+                      )}
+
+                      {/* 自分プレイヤーの場合、確定ボタン */}
+                      {isSelfPlayer && isOn && !selectedPlayer.confirmedHintId && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            confirmHint(selectedPlayer.id, hint.id)
+                          }}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                          title="このヒントを確定する"
+                        >
+                          確定
+                        </button>
+                      )}
+
+                      {/* このヒントが確定済みマーク */}
+                      {isMyConfirmedHint && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-white">
+                          ★確定
+                        </span>
+                      )}
+                    </div>
                   )
                 })}
               </div>

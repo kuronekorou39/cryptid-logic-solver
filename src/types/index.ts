@@ -96,6 +96,7 @@ export interface Player {
   color: PlayerColor;
   enabled: boolean;  // このプレイヤーを使用するか
   possibleHintIds: string[]; // 可能性のあるヒントIDリスト
+  confirmedHintId: string | null;  // 確定したヒントID（nullは未確定）
 }
 
 // ========================================
@@ -138,6 +139,7 @@ export interface GameState {
   mapSettings: MapSettings;
   playerMarkers: PlayerMarkers;  // プレイヤーごとのマーカー配置
   autoMode: boolean;  // 自動モード: マーカーに基づいてヒントを自動計算
+  selfPlayerId: string | null;  // 「自分」のプレイヤーID
   createdAt: number;
   updatedAt: number;
 }

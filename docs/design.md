@@ -29,143 +29,169 @@
 ## 2. クリプティッド ゲームシステム概要
 
 ### 2.1 ゲームの基本
-- 6x9のヘックスマップ上でUMA（未確認生物）の居場所を推理
+- 9x6のヘックスマップ上でUMA（未確認生物）の居場所を推理
 - 各プレイヤーは1つの秘密のヒントを持つ
 - 全員のヒント条件を満たす唯一のマスがUMAの居場所
 
 ### 2.2 マスの属性
 | 属性 | 種類 |
 |------|------|
-| 地形 | 森林、砂漠、沼地、山岳、水域 |
-| 構造物 | 廃墟（黒/白）、巨石（青/緑）、なし |
-| 動物の縄張り | クマ、クーガー |
+| 地形 | 森林、砂漠、沼地、山岳、水辺 |
+| 構造物 | 巨石（青/緑）、廃墟（白/黒）、なし |
+| 動物の縄張り | クマ、ワシ |
 
-### 2.3 ヒントの種類（ノーマルモード）
-1. **地形系**: 「○○地形にいる」「○○地形から1マス以内」
-2. **構造物系**: 「○色の構造物から○マス以内」
-3. **動物系**: 「○○の縄張り内にいる」「どちらかの動物の縄張り内」
-4. **複合系**: 「○○か△△にいる」
+### 2.3 ヒントの種類（ノーマルモード: 42件）
+1. **地形系**: 「○○地形にいる」「○○地形から1マス以内」「○○地形にいない」
+2. **構造物系**: 「○色の構造物から○マス以内」「巨石/廃墟から○マス以内」
+3. **動物系**: 「○○の縄張り内にいる」「どちらかの動物の縄張り内」「○○から○マス以内」
 
 ### 2.4 ゲーム中のアクション
 - **質問**: 他プレイヤーに特定のマスを指定し「UMAはここにいるか？」と質問
-- **キューブ（NO）**: そのマスにUMAはいない → そのヒントでは成立しない
-- **ディスク（YES）**: そのマスにUMAがいる可能性あり → そのヒントで成立する
+- **disc（○）**: そのマスにUMAがいる可能性あり → そのヒントで成立する
+- **cube（×）**: そのマスにUMAはいない → そのヒントでは成立しない
 
 ---
 
 ## 3. データモデル設計
 
-### 3.1 ヒント (Hint)
+### 3.1 基本型
 
 ```typescript
+/** 地形タイプ */
 type TerrainType = 'forest' | 'desert' | 'swamp' | 'mountain' | 'water';
-type StructureColor = 'black' | 'white' | 'blue' | 'green';
+
+/** 構造物の色 */
+type StructureColor = 'white' | 'black' | 'green' | 'blue';
+
+/** 構造物タイプ */
+type StructureType = 'standing_stone' | 'shack';
+
+/** 動物タイプ */
 type AnimalType = 'bear' | 'cougar';
 
+/** プレイヤーカラー */
+type PlayerColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple';
+
+/** ゲームモード */
+type GameMode = 'normal' | 'advanced';
+
+/** プレイヤーシンボル */
+type PlayerSymbol = 'α' | 'β' | 'γ' | 'δ' | 'ε';
+
+/** マーカータイプ */
+type MarkerType = 'disc' | 'cube';  // disc=いる可能性あり(○), cube=いない(×)
+```
+
+### 3.2 ヒント (Hint)
+
+```typescript
+type HintCategory = 'terrain' | 'structure' | 'animal';
+
 interface HintCondition {
-  // 地形条件
+  // 地形条件（複数指定時はOR）
   terrains?: TerrainType[];
-  terrainRange?: number; // 0 = その地形上、1 = 1マス以内、2 = 2マス以内
 
   // 構造物条件
-  structureColors?: StructureColor[];
-  structureRange?: number;
-  anyStructure?: boolean; // いずれかの構造物
+  structureColors?: StructureColor[]; // 特定色（複数指定時はOR）
+  structureTypes?: StructureType[];   // 構造物タイプ（巨石/廃墟）
+  anyStructure?: boolean;             // いずれかの構造物
 
   // 動物条件
-  animals?: AnimalType[];
-  anyAnimal?: boolean; // いずれかの動物
+  animals?: AnimalType[];             // 特定動物（複数指定時はOR）
+  anyAnimal?: boolean;                // いずれかの動物
+
+  // 距離（0 = その上、1 = 1マス以内、2 = 2マス以内、3 = 3マス以内）
+  range: number;
+
+  // 否定条件（〜にいない）
+  negated?: boolean;
 }
 
 interface Hint {
   id: string;
   text: string;           // 日本語テキスト
-  textEn: string;         // 英語テキスト（オプション）
-  mode: 'normal' | 'hard';
-  category: 'terrain' | 'structure' | 'animal' | 'composite';
+  mode: GameMode;
+  category: HintCategory;
   condition: HintCondition;
 }
 ```
 
-### 3.2 マス (Cell)
+### 3.3 マス情報 (CellInfo)
 
 ```typescript
-interface Cell {
-  coordinate: string;     // 例: "A1", "B3"
-  row: number;            // 0-8
-  col: number;            // 0-5
-  terrain: TerrainType;
-  structure: {
-    type: 'ruin' | 'standing_stone' | null;
-    color: StructureColor | null;
-  };
-  animalTerritory: AnimalType | null;
-}
-```
-
-### 3.3 マップ (GameMap)
-
-```typescript
-interface GameMap {
-  id: string;
-  tiles: MapTile[];       // 6枚のタイル構成
-  cells: Cell[];          // 全54マス (6x9)
-}
-
-interface MapTile {
-  tileId: string;         // タイルID (1-6)
-  position: number;       // 配置位置 (0-5)
-  flipped: boolean;       // 裏面かどうか
-}
-```
-
-### 3.4 プレイヤー (Player)
-
-```typescript
-interface Player {
-  id: string;
-  name: string;
-  color: 'red' | 'blue' | 'green' | 'yellow' | 'purple';
-  possibleHints: string[]; // 可能性のあるヒントIDリスト
-  actions: PlayerAction[]; // このプレイヤーの行動履歴
-}
-
-interface PlayerAction {
-  id: string;
-  type: 'cube' | 'disc';  // NO or YES
-  coordinate: string;
-  timestamp: number;
-}
-```
-
-### 3.5 ゲーム状態 (GameState)
-
-```typescript
-interface GameState {
-  id: string;
-  mode: 'normal' | 'hard';
-  players: Player[];
-  map: GameMap | null;    // マップ設定（オプション）
-  actions: GameAction[];  // 全行動履歴
-  createdAt: number;
-  updatedAt: number;
-}
-
-interface GameAction {
-  id: string;
-  playerId: string;
-  type: 'cube' | 'disc';
-  coordinate: string;
-  cellInfo: CellInfo;     // そのマスの属性情報
-  timestamp: number;
-}
-
+/** マス情報（ヒント評価用） */
 interface CellInfo {
   terrain: TerrainType;
-  structure: StructureColor | null;
-  nearStructures: { color: StructureColor; distance: number }[];
+  structureColor: StructureColor | null;
+  structureType: StructureType | null;
+  nearStructures: { type: StructureType; color: StructureColor; distance: number }[];
   animalTerritory: AnimalType | null;
   nearAnimals: { animal: AnimalType; distance: number }[];
+}
+```
+
+### 3.4 マップ設定 (MapSettings)
+
+```typescript
+/** タイル配置 */
+interface TileConfig {
+  tileId: number | null;  // null = 未設定
+  reversed: boolean;
+}
+
+/** 構造物座標 */
+interface StructureCoord {
+  col: number;
+  row: number;
+}
+
+/** マップ設定 */
+interface MapSettings {
+  tiles: TileConfig[];                              // 6枚のタイル
+  structureCoords: Record<string, StructureCoord | null>;  // 8つの構造物の座標
+}
+```
+
+### 3.5 プレイヤー (Player)
+
+```typescript
+/** プレイヤーアクション */
+interface PlayerAction {
+  id: string;
+  playerId: string;
+  type: 'cube' | 'disc';  // NO or YES
+  coordinate: string;
+  cellInfo: CellInfo;
+  timestamp: number;
+}
+
+/** プレイヤー */
+interface Player {
+  id: string;
+  symbol: PlayerSymbol;
+  name: string;                    // カスタム名（空文字の場合はシンボルを表示）
+  color: PlayerColor;
+  enabled: boolean;                // このプレイヤーを使用するか
+  possibleHintIds: string[];       // 可能性のあるヒントIDリスト
+}
+```
+
+### 3.6 ゲーム状態 (GameState)
+
+```typescript
+/** プレイヤーマーカー（playerId -> cellKey -> MarkerType） */
+type PlayerMarkers = Record<string, Record<string, MarkerType>>;
+
+/** ゲーム状態 */
+interface GameState {
+  mode: GameMode;
+  players: Player[];                // 5人固定
+  actions: PlayerAction[];
+  mapSettings: MapSettings;
+  playerMarkers: PlayerMarkers;     // プレイヤーごとのマーカー配置
+  autoMode: boolean;                // 自動モード: マーカーに基づいてヒントを自動計算
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -173,9 +199,8 @@ interface CellInfo {
 
 ## 4. 論理消去エンジン設計
 
-### 4.1 コア機能
+### 4.1 手動モード: ヒント評価関数
 
-#### 4.1.1 ヒント評価関数
 マスの属性情報とヒントを受け取り、そのヒントが成立するかを判定。
 
 ```typescript
@@ -186,7 +211,8 @@ function evaluateHint(hint: Hint, cellInfo: CellInfo): boolean {
 }
 ```
 
-#### 4.1.2 消去ロジック
+### 4.2 手動モード: 消去ロジック
+
 ```
 キューブ（NO）が置かれた場合:
   そのマスで「成立する」ヒント → 候補から除外
@@ -197,45 +223,61 @@ function evaluateHint(hint: Hint, cellInfo: CellInfo): boolean {
   理由: YESと答えた = そのヒントで成立するはず
 ```
 
-#### 4.1.3 消去実行関数
+### 4.3 自動モード: マーカーベースのヒント計算
+
+マップ上のマーカー配置に基づいて、矛盾しないヒントを自動計算。
 
 ```typescript
-function eliminateHints(
-  player: Player,
-  action: PlayerAction,
-  cellInfo: CellInfo,
-  allHints: Hint[]
+function calculateConsistentHints(
+  tiles: TileConfig[],
+  structureCoords: Record<string, StructureCoord | null>,
+  markers: Record<string, MarkerType>,  // cellKey -> MarkerType
+  mode: GameMode
 ): string[] {
-  return player.possibleHints.filter(hintId => {
-    const hint = allHints.find(h => h.id === hintId);
-    if (!hint) return false;
-
-    const isMatch = evaluateHint(hint, cellInfo);
-
-    if (action.type === 'cube') {
-      // NO → 成立するヒントを除外
-      return !isMatch;
-    } else {
-      // YES → 成立しないヒントを除外
-      return isMatch;
-    }
-  });
+  // 各ヒントがマーカーと矛盾しないかチェック
+  // disc（○）があるセル → そのセルでFALSEになるヒントを除外
+  // cube（×）があるセル → そのセルでTRUEになるヒントを除外
+  // 全マーカーと矛盾しないヒントIDを返す
 }
 ```
 
-### 4.2 距離計算
-
-ヘックスマップの距離計算にはキューブ座標系を使用。
+### 4.4 マップ上でのヒント評価
 
 ```typescript
-function hexDistance(a: HexCoord, b: HexCoord): number {
-  return (Math.abs(a.q - b.q) + Math.abs(a.r - b.r) + Math.abs(a.s - b.s)) / 2;
+function evaluateHintOnMap(
+  hint: Hint,
+  grid: MapGrid,
+  col: number,
+  row: number
+): boolean {
+  // マップグリッドを使用して、特定セルでヒントが成立するかを評価
+  // 距離計算はヘックスマップの座標系（odd-q）を使用
+}
+```
+
+### 4.5 距離計算（odd-q座標系）
+
+ヘックスマップの距離計算にはodd-q座標系を使用。
+
+```typescript
+// odd-qオフセット座標からキューブ座標へ変換
+function offsetToCube(col: number, row: number): { q: number; r: number; s: number } {
+  const q = col
+  const r = row - (col - (col & 1)) / 2
+  const s = -q - r
+  return { q, r, s }
 }
 
-interface HexCoord {
-  q: number;
-  r: number;
-  s: number; // q + r + s = 0
+// キューブ座標間の距離
+function cubeDistance(a: CubeCoord, b: CubeCoord): number {
+  return (Math.abs(a.q - b.q) + Math.abs(a.r - b.r) + Math.abs(a.s - b.s)) / 2
+}
+
+// オフセット座標間の距離
+function hexDistance(col1: number, row1: number, col2: number, row2: number): number {
+  const a = offsetToCube(col1, row1)
+  const b = offsetToCube(col2, row2)
+  return cubeDistance(a, b)
 }
 ```
 
@@ -248,27 +290,47 @@ interface HexCoord {
 ```
 ┌─────────────────────────────────────┐
 │           Header                     │
-│  [タイトル]              [リセット]   │
+│  [タイトル] [ノーマル/アドバンスト]  [リセット]  │
 ├─────────────────────────────────────┤
 │                                     │
-│        Player Dashboard             │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐   │
-│  │ P1  │ │ P2  │ │ P3  │ │ P4  │   │
-│  │ 12  │ │ 8   │ │ 5   │ │ 10  │   │
-│  └─────┘ └─────┘ └─────┘ └─────┘   │
+│     [マップ] [ヒント] タブ切り替え    │
 │                                     │
 ├─────────────────────────────────────┤
 │                                     │
-│        Action Input Form            │
-│  [プレイヤー選択] [座標入力]         │
-│  [地形] [構造物] [動物]             │
-│  [キューブ] [ディスク]               │
+│  【マップタブ】                      │
+│  ┌─────────────────────────────┐    │
+│  │  タイル設定 (6枚)             │    │
+│  │  [1▼] [2▼] [3▼]              │    │
+│  │  [4▼] [5▼] [6▼]              │    │
+│  └─────────────────────────────┘    │
+│  ┌─────────────────────────────┐    │
+│  │  構造物配置 (8個)             │    │
+│  └─────────────────────────────┘    │
+│  ┌─────────────────────────────┐    │
+│  │  ヘックスマップ表示           │    │
+│  │  (マーカー配置可能)           │    │
+│  └─────────────────────────────┘    │
 │                                     │
 ├─────────────────────────────────────┤
 │                                     │
-│        Action History               │
-│  - P2: A3にキューブ (森林)           │
-│  - P1: B5にディスク (砂漠, 青巨石)   │
+│  【ヒントタブ】                      │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐  │
+│  │  α  │ │  β  │ │  γ  │ │  δ  │ │  ε  │  │
+│  │ 12  │ │ 8   │ │ 5   │ │ 10  │ │ OFF │  │
+│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘  │
+│                                     │
+│  [自動] [OFF非表示] オプション       │
+│                                     │
+│  地形カテゴリ                        │
+│  ├─ 森林か砂漠にいる [ON/OFF]        │
+│  ├─ 森林から1マス以内 [ON/OFF]       │
+│  └─ ...                             │
+│                                     │
+│  構造物カテゴリ                      │
+│  └─ ...                             │
+│                                     │
+│  動物カテゴリ                        │
+│  └─ ...                             │
 │                                     │
 └─────────────────────────────────────┘
 ```
@@ -278,69 +340,22 @@ interface HexCoord {
 ```
 App
 ├── Header
-│   ├── Logo
+│   ├── タイトル
+│   ├── ModeSelector (ノーマル/アドバンスト)
 │   └── ResetButton
-├── GameSetup (初期画面)
-│   ├── ModeSelector (ノーマル/ハード)
-│   └── PlayerSetup
-├── GameBoard (メイン画面)
-│   ├── PlayerDashboard
-│   │   └── PlayerCard (複数)
-│   │       ├── PlayerName
-│   │       ├── HintCount
-│   │       └── ProgressBar
-│   ├── ActionInputForm
-│   │   ├── PlayerSelector
-│   │   ├── CoordinateInput
-│   │   ├── TerrainSelector
-│   │   ├── StructureSelector
-│   │   ├── AnimalSelector
-│   │   └── ActionButtons (Cube/Disc)
-│   └── ActionHistory
-│       └── ActionItem (複数)
-├── PlayerDetailModal
-│   ├── HintList
-│   │   └── HintItem (複数)
-│   └── ManualToggle
-└── Footer
+├── タブ切り替え (マップ/ヒント)
+├── MapView (マップタブ)
+│   ├── TileSettings (6枚のタイル設定)
+│   ├── StructureSettings (8つの構造物配置)
+│   ├── PlayerMarkerSelector (プレイヤー選択)
+│   └── HexMap (ヘックスマップ描画)
+│       └── HexCell (各セル、マーカー表示)
+└── GameBoard (ヒントタブ)
+    ├── PlayerTabs (5人のプレイヤータブ)
+    ├── OptionsBar (自動モード、OFF非表示)
+    └── HintList (カテゴリ別ヒント一覧)
+        └── HintItem (個別ヒント、トグル)
 ```
-
-### 5.3 主要コンポーネント詳細
-
-#### PlayerCard
-```typescript
-interface PlayerCardProps {
-  player: Player;
-  totalHints: number;
-  onClick: () => void;
-}
-```
-- 残りヒント数を表示
-- プログレスバーで絞り込み進捗を可視化
-- タップで詳細モーダルを開く
-
-#### ActionInputForm
-```typescript
-interface ActionInputFormProps {
-  players: Player[];
-  onSubmit: (action: GameAction) => void;
-}
-```
-- 座標入力（A-F, 1-9 のセレクタ）
-- マス属性の選択UI
-- キューブ/ディスクボタン
-
-#### PlayerDetailModal
-```typescript
-interface PlayerDetailModalProps {
-  player: Player;
-  hints: Hint[];
-  onToggleHint: (hintId: string) => void;
-  onClose: () => void;
-}
-```
-- 残りヒント一覧（チェックボックス付き）
-- 手動での候補操作が可能
 
 ---
 
@@ -349,44 +364,27 @@ interface PlayerDetailModalProps {
 ```
 src/
 ├── components/
-│   ├── common/
-│   │   ├── Button.tsx
-│   │   ├── Card.tsx
-│   │   ├── Modal.tsx
-│   │   ├── ProgressBar.tsx
-│   │   └── Select.tsx
-│   ├── game/
-│   │   ├── ActionHistory.tsx
-│   │   ├── ActionInputForm.tsx
-│   │   ├── CoordinateInput.tsx
-│   │   ├── PlayerCard.tsx
-│   │   ├── PlayerDashboard.tsx
-│   │   └── PlayerDetailModal.tsx
-│   ├── layout/
-│   │   ├── Header.tsx
-│   │   └── Footer.tsx
-│   └── setup/
-│       ├── GameSetup.tsx
-│       ├── ModeSelector.tsx
-│       └── PlayerSetup.tsx
+│   ├── Header.tsx            # ヘッダー（モード選択・リセット）
+│   ├── GameBoard.tsx         # ヒント一覧・プレイヤータブ
+│   ├── MapView.tsx           # マップ設定画面（タイル・構造物配置）
+│   ├── HexMap.tsx            # ヘックスマップ描画・マーカー配置
+│   └── Icons.tsx             # SVGアイコンコンポーネント
 ├── data/
-│   ├── hints-normal.ts        # ノーマルモードヒント
-│   ├── hints-hard.ts          # ハードモードヒント
-│   └── index.ts
+│   ├── hints-normal.ts       # ノーマルモードヒント（42件）
+│   ├── hints-advanced.ts     # アドバンストモードヒント（25件）
+│   ├── map-tiles.ts          # マップタイルデータ（6枚）
+│   ├── constants.ts          # プレイヤーカラー等の定数
+│   └── index.ts              # エクスポート・ユーティリティ関数
 ├── hooks/
-│   ├── useGame.ts             # ゲーム状態管理
-│   ├── useHintElimination.ts  # 消去ロジック
-│   └── useLocalStorage.ts     # 永続化
+│   └── useGame.ts            # GameContext利用フック
 ├── logic/
-│   ├── elimination.ts         # 消去エンジン
-│   ├── evaluation.ts          # ヒント評価
-│   └── hex.ts                 # ヘックス座標計算
+│   ├── elimination.ts        # ヒント評価・消去エンジン（手動モード用）
+│   ├── possible-cells.ts     # マップ上ヒント評価（自動モード用）
+│   └── map-utils.ts          # ヘックスマップ座標計算
 ├── types/
-│   ├── game.ts
-│   ├── hint.ts
-│   └── player.ts
+│   └── index.ts              # 全型定義
 ├── context/
-│   └── GameContext.tsx
+│   └── GameContext.tsx       # React Context + Reducer
 ├── App.tsx
 ├── main.tsx
 └── index.css
@@ -400,19 +398,28 @@ src/
 
 ```typescript
 interface GameContextValue {
-  state: GameState;
-  dispatch: React.Dispatch<GameAction>;
+  state: GameState
+  dispatch: React.Dispatch<GameReducerAction>
 
-  // 便利なヘルパー
-  addPlayer: (name: string, color: PlayerColor) => void;
-  removePlayer: (playerId: string) => void;
-  recordAction: (action: Omit<GameAction, 'id' | 'timestamp'>) => void;
-  undoLastAction: () => void;
-  resetGame: () => void;
+  // Helper functions
+  setMode: (mode: GameMode) => void
+  togglePlayer: (playerId: string) => void
+  setPlayerName: (playerId: string, name: string) => void
+  startGame: () => void
+  recordAction: (playerId: string, type: 'cube' | 'disc', coordinate: string, cellInfo: CellInfo) => void
+  undoAction: () => void
+  toggleHint: (playerId: string, hintId: string) => void
+  resetGame: () => void
 
-  // 計算プロパティ
-  getPlayerHints: (playerId: string) => Hint[];
-  getRemainingHintCount: (playerId: string) => number;
+  // Map settings
+  setTiles: (tiles: TileConfig[], changedIndex: number) => void
+  setStructureCoord: (id: string, coord: StructureCoord | null) => void
+
+  // Markers
+  setMarker: (playerId: string, cellKey: string, markerType: MarkerType | null) => void
+
+  // Auto mode
+  toggleAutoMode: () => void
 }
 ```
 
@@ -420,39 +427,49 @@ interface GameContextValue {
 
 ```typescript
 type GameReducerAction =
-  | { type: 'SET_MODE'; payload: 'normal' | 'hard' }
-  | { type: 'ADD_PLAYER'; payload: Omit<Player, 'id' | 'possibleHints' | 'actions'> }
-  | { type: 'REMOVE_PLAYER'; payload: string }
-  | { type: 'RECORD_ACTION'; payload: GameAction }
+  | { type: 'SET_MODE'; payload: GameMode }
+  | { type: 'TOGGLE_PLAYER'; payload: string }
+  | { type: 'SET_PLAYER_NAME'; payload: { playerId: string; name: string } }
+  | { type: 'START_GAME' }
+  | { type: 'RECORD_ACTION'; payload: Omit<PlayerAction, 'id' | 'timestamp'> }
   | { type: 'UNDO_ACTION' }
   | { type: 'TOGGLE_HINT'; payload: { playerId: string; hintId: string } }
   | { type: 'RESET_GAME' }
-  | { type: 'LOAD_STATE'; payload: GameState };
+  | { type: 'LOAD_STATE'; payload: GameState }
+  | { type: 'SET_TILES'; payload: { tiles: TileConfig[]; changedIndex: number } }
+  | { type: 'SET_STRUCTURE_COORD'; payload: { id: string; coord: StructureCoord | null } }
+  | { type: 'SET_MARKER'; payload: { playerId: string; cellKey: string; markerType: MarkerType | null } }
+  | { type: 'TOGGLE_AUTO_MODE' }
+  | { type: 'RECALCULATE_HINTS'; payload: { playerId: string } }
 ```
 
 ---
 
-## 8. MVP機能一覧
+## 8. 実装済み機能
 
 ### Phase 1: 基本機能
-- [ ] プロジェクトセットアップ（Vite + React + TypeScript + Tailwind）
-- [ ] ヒントデータベース作成（ノーマルモード）
-- [ ] プレイヤー登録UI
-- [ ] マス情報入力フォーム
-- [ ] 論理消去エンジン実装
-- [ ] プレイヤーダッシュボード
-- [ ] ヒント詳細モーダル
+- [x] プロジェクトセットアップ（Vite + React + TypeScript + Tailwind）
+- [x] ヒントデータベース作成（ノーマルモード 42件）
+- [x] ヒントデータベース作成（アドバンストモード 25件追加）
+- [x] 5人固定プレイヤー（シンボルα〜ε）
+- [x] 論理消去エンジン実装
+- [x] ヒント一覧表示（カテゴリ別、トグルUI）
+- [x] LocalStorage永続化
+- [x] レスポンシブ対応
 
-### Phase 2: UX改善
-- [ ] 行動履歴表示
-- [ ] Undo機能
-- [ ] LocalStorage永続化
-- [ ] レスポンシブ対応
+### Phase 2: マップ機能
+- [x] マップタイルデータ（6枚）
+- [x] タイル配置設定UI
+- [x] 構造物配置設定UI
+- [x] ヘックスマップビューア（odd-q座標系）
+- [x] マーカー配置機能（disc/cube）
+- [x] 自動モード（マーカーに基づくヒント自動計算）
 
-### Phase 3: 拡張機能
-- [ ] ハードモードヒント追加
-- [ ] マップタイル対応（自動属性取得）
-- [ ] 統計情報表示
+### Phase 3: UX改善
+- [x] ヒントフィルター（地形アイコン）
+- [x] OFF非表示オプション
+- [x] ヒントテキストのカラーリング
+- [x] プレイヤー参加/解除のワンタップ切り替え
 
 ---
 
@@ -477,7 +494,7 @@ type GameReducerAction =
 
 ## 10. 今後の拡張案
 
-1. **マップビジュアライザー**: 実際のマップを表示し、クリックでマス選択
+1. **候補セル可視化**: 全プレイヤーのヒント交差による候補マスをマップ上にハイライト
 2. **AI推論アシスト**: 最も情報量の多い質問を提案
 3. **複数言語対応**: 英語UI
 4. **PWA化**: オフライン完全対応
