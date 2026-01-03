@@ -106,6 +106,15 @@ function hintMatchesTerrain(hint: Hint, terrain: TerrainType): boolean {
   return hint.condition.terrains?.includes(terrain) ?? false
 }
 
+// ヒントのソートキーを取得（肯定形と否定形をペアにする）
+function getHintSortKey(hint: Hint): string {
+  // IDから n- または a- プレフィックスと -not サフィックスを除去してベースIDを取得
+  let baseId = hint.id.replace(/^[na]-/, '').replace(/-not$/, '')
+  // 否定形は後に来るように z を付加
+  const negatedSuffix = hint.condition.negated ? 'z' : 'a'
+  return `${baseId}-${negatedSuffix}`
+}
+
 interface GameBoardProps {
   selectedPlayerId: string
   onSelectPlayer: (playerId: string) => void
@@ -153,10 +162,14 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
     onSelectPlayer(playerId)
   }
 
+  // カテゴリ別にヒントを分類し、肯定形と否定形をペアでソート
+  const sortHints = (hints: Hint[]) =>
+    [...hints].sort((a, b) => getHintSortKey(a).localeCompare(getHintSortKey(b)))
+
   const hintsByCategory = {
-    terrain: filteredHints.filter((h) => h.category === 'terrain'),
-    structure: filteredHints.filter((h) => h.category === 'structure'),
-    animal: filteredHints.filter((h) => h.category === 'animal'),
+    terrain: sortHints(filteredHints.filter((h) => h.category === 'terrain')),
+    structure: sortHints(filteredHints.filter((h) => h.category === 'structure')),
+    animal: sortHints(filteredHints.filter((h) => h.category === 'animal')),
   }
 
   const categoryLabels = {
