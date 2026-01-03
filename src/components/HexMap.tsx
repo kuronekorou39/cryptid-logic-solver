@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import { MAP_TILES, rotateTile180, type MapConfig } from '../data/map-tiles';
 import type { TerrainType, AnimalType, StructureColor } from '../types';
 
-// 地形の色
+// 地形の色（実際のボドゲに近づけて調整）
 const TERRAIN_COLORS: Record<TerrainType, string> = {
-  forest: '#22c55e',   // green-500
-  desert: '#eab308',   // yellow-500
-  swamp: '#a855f7',    // purple-500
-  mountain: '#6b7280', // gray-500
-  water: '#3b82f6',    // blue-500
+  forest: '#166534',   // green-800（深い緑）
+  desert: '#fde047',   // yellow-300（明るい黄）
+  swamp: '#7e22ce',    // purple-700（深い紫）
+  mountain: '#d1d5db', // gray-300（明るいグレー）
+  water: '#7dd3fc',    // sky-300（明るい水色）
 };
 
 // 構造物の色（地形と区別しやすいように調整）
