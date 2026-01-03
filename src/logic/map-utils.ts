@@ -33,29 +33,31 @@ export function cellKey(col: number, row: number): string {
 
 /**
  * ヘックスグリッドでの隣接セルを取得
- * オフセット座標系（奇数行がずれる）
+ * オフセット座標系（odd-q: 奇数列がずれる、flat-top hexagon）
  */
 export function getNeighbors(col: number, row: number): { col: number; row: number }[] {
-  const isOddRow = row % 2 === 1
+  const isOddCol = col % 2 === 1
 
-  // 奇数行と偶数行で左右のオフセットが異なる
-  if (isOddRow) {
+  // 奇数列と偶数列で上下のオフセットが異なる
+  if (isOddCol) {
+    // 奇数列（下にずれている）
     return [
-      { col: col,     row: row - 1 }, // 右上
-      { col: col + 1, row: row - 1 }, // 左上
-      { col: col - 1, row: row     }, // 左
-      { col: col + 1, row: row     }, // 右
-      { col: col,     row: row + 1 }, // 右下
-      { col: col + 1, row: row + 1 }, // 左下
+      { col: col - 1, row: row     }, // 左上
+      { col: col + 1, row: row     }, // 右上
+      { col: col - 1, row: row + 1 }, // 左下
+      { col: col + 1, row: row + 1 }, // 右下
+      { col: col,     row: row - 1 }, // 上
+      { col: col,     row: row + 1 }, // 下
     ]
   } else {
+    // 偶数列
     return [
       { col: col - 1, row: row - 1 }, // 左上
-      { col: col,     row: row - 1 }, // 右上
-      { col: col - 1, row: row     }, // 左
-      { col: col + 1, row: row     }, // 右
-      { col: col - 1, row: row + 1 }, // 左下
-      { col: col,     row: row + 1 }, // 右下
+      { col: col + 1, row: row - 1 }, // 右上
+      { col: col - 1, row: row     }, // 左下
+      { col: col + 1, row: row     }, // 右下
+      { col: col,     row: row - 1 }, // 上
+      { col: col,     row: row + 1 }, // 下
     ]
   }
 }
@@ -79,11 +81,11 @@ export function hexDistance(col1: number, row1: number, col2: number, row2: numb
 
 /**
  * オフセット座標をキューブ座標に変換
- * 奇数行がずれる（odd-r）オフセット座標系
+ * 奇数列がずれる（odd-q）オフセット座標系（flat-top hexagon）
  */
 function offsetToCube(col: number, row: number): { x: number; y: number; z: number } {
-  const x = col - Math.floor((row - (row & 1)) / 2)
-  const z = row
+  const x = col
+  const z = row - Math.floor((col - (col & 1)) / 2)
   const y = -x - z
   return { x, y, z }
 }
