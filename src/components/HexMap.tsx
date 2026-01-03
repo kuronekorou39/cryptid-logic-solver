@@ -522,8 +522,8 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
           const hasPossibleCells = playerPossibleCells && playerPossibleCells.some(p => p.cells.size > 0);
 
           // 可能セル表示中はマップ全体を薄く表示（オーバーレイで強調）
-          // dimmedプロップが指定されている場合は構造物設定モード
-          const cellDimmed = dimmed || (hasPossibleCells && !isEmpty);
+          // dimmedプロップが指定されている場合は構造物設定モード（ただしハイライトセルは除く）
+          const cellDimmed = (dimmed && !isHighlighted) || (hasPossibleCells && !isEmpty);
 
           return (
             <g
@@ -566,9 +566,9 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                 </g>
               )}
 
-              {/* 構造物マーカー */}
+              {/* 構造物マーカー（構造物設定モード中は常に表示） */}
               {cell.structure && (
-                <g opacity={cellDimmed ? 0.35 : 1}>
+                <g opacity={(dimmed || !cellDimmed) ? 1 : 0.35}>
                   <StructureMarker
                     type={cell.structure.type}
                     color={cell.structure.color}
