@@ -203,7 +203,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
       </div>
 
 
-      {/* コンパクトなフィルターバー（有効なプレイヤーのみ表示） */}
+      {/* オプションバー（有効なプレイヤーのみ表示） */}
       {selectedPlayer?.enabled && (
         <div className="bg-white rounded-xl shadow px-3 py-2 mb-3">
           <div className="flex items-center gap-2">
@@ -215,36 +215,6 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
             >
               ×解除
             </button>
-            <div className="w-px h-4 bg-gray-200" />
-            {/* 地形フィルター（5種類のみ） */}
-            <div className="flex gap-1">
-              {(['forest', 'desert', 'swamp', 'mountain', 'water'] as TerrainType[]).map((t) => {
-                const info = terrainIcons[t]
-                const active = terrainFilters.includes(t)
-                return (
-                  <button
-                    key={t}
-                    onClick={() => toggleTerrainFilter(t)}
-                    className={`p-1 rounded transition-all ${
-                      active
-                        ? 'bg-emerald-100 ring-2 ring-emerald-500'
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span className={info.color}>{info.icon}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {terrainFilters.length > 0 && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-red-500 hover:text-red-600"
-              >
-                ×
-              </button>
-            )}
 
             <div className="flex-1" />
 
@@ -273,9 +243,44 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
             .filter(([, hints]) => hints.length > 0)
             .map(([category, hints]) => (
             <div key={category} className="bg-white rounded-xl shadow p-3">
-              <h3 className="font-bold text-gray-700 text-sm mb-2 border-b pb-1">
-                {categoryLabels[category as keyof typeof categoryLabels]}
-              </h3>
+              <div className="flex items-center gap-2 mb-2 border-b pb-1">
+                <h3 className="font-bold text-gray-700 text-sm">
+                  {categoryLabels[category as keyof typeof categoryLabels]}
+                </h3>
+                {/* 地形カテゴリの場合はフィルターを表示 */}
+                {category === 'terrain' && (
+                  <>
+                    <div className="flex-1" />
+                    <div className="flex gap-0.5">
+                      {(['forest', 'desert', 'swamp', 'mountain', 'water'] as TerrainType[]).map((t) => {
+                        const info = terrainIcons[t]
+                        const active = terrainFilters.includes(t)
+                        return (
+                          <button
+                            key={t}
+                            onClick={() => toggleTerrainFilter(t)}
+                            className={`p-0.5 rounded transition-all ${
+                              active
+                                ? 'bg-emerald-100 ring-1 ring-emerald-500'
+                                : 'opacity-40 hover:opacity-100'
+                            }`}
+                          >
+                            <span className={`${info.color} text-sm`}>{info.icon}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {terrainFilters.length > 0 && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-xs text-red-400 hover:text-red-600"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
               <div className="space-y-0.5">
                 {hints.map((hint) => {
                   const isOn = selectedPlayer.possibleHintIds.includes(hint.id)
