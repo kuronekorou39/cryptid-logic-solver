@@ -316,12 +316,18 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
       let updatedPlayers = state.players
       if (state.autoMode) {
         const playerMarkersForCalc = newMarkers[playerId] || {}
-        const consistentHints = calculateConsistentHints(
+        let consistentHints = calculateConsistentHints(
           state.mapSettings.tiles,
           state.mapSettings.structureCoords,
           playerMarkersForCalc,
           state.mode
         )
+        // 他プレイヤーの確定ヒントを除外
+        const otherConfirmedHintIds = state.players
+          .filter(p => p.id !== playerId && p.confirmedHintId)
+          .map(p => p.confirmedHintId!)
+        consistentHints = consistentHints.filter(id => !otherConfirmedHintIds.includes(id))
+
         updatedPlayers = state.players.map(p =>
           p.id === playerId
             ? { ...p, possibleHintIds: consistentHints }
@@ -346,12 +352,18 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
         updatedPlayers = state.players.map(player => {
           if (!player.enabled) return player
           const playerMarkers = state.playerMarkers[player.id] || {}
-          const consistentHints = calculateConsistentHints(
+          let consistentHints = calculateConsistentHints(
             state.mapSettings.tiles,
             state.mapSettings.structureCoords,
             playerMarkers,
             state.mode
           )
+          // 他プレイヤーの確定ヒントを除外
+          const otherConfirmedHintIds = state.players
+            .filter(p => p.id !== player.id && p.confirmedHintId)
+            .map(p => p.confirmedHintId!)
+          consistentHints = consistentHints.filter(id => !otherConfirmedHintIds.includes(id))
+
           return { ...player, possibleHintIds: consistentHints }
         })
       }
@@ -367,12 +379,18 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
     case 'RECALCULATE_HINTS': {
       const { playerId } = action.payload
       const playerMarkers = state.playerMarkers[playerId] || {}
-      const consistentHints = calculateConsistentHints(
+      let consistentHints = calculateConsistentHints(
         state.mapSettings.tiles,
         state.mapSettings.structureCoords,
         playerMarkers,
         state.mode
       )
+      // 他プレイヤーの確定ヒントを除外
+      const otherConfirmedHintIds = state.players
+        .filter(p => p.id !== playerId && p.confirmedHintId)
+        .map(p => p.confirmedHintId!)
+      consistentHints = consistentHints.filter(id => !otherConfirmedHintIds.includes(id))
+
       const updatedPlayers = state.players.map(p =>
         p.id === playerId
           ? { ...p, possibleHintIds: consistentHints }
