@@ -539,23 +539,6 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                   opacity={dimmed ? 0.35 : 1}
                 />
               )}
-              {/* プレイヤーごとの可能セルオーバーレイ */}
-              {!isEmpty && possiblePlayers.map((player) => {
-                const playerColor = PLAYER_ID_TO_COLOR[player.playerId];
-                const color = PLAYER_MARKER_COLORS[playerColor];
-                return (
-                  <polygon
-                    key={player.playerId}
-                    points={getHexPoints(x, y)}
-                    fill={color}
-                    opacity={0.35}
-                    stroke={color}
-                    strokeWidth={2}
-                    strokeOpacity={0.8}
-                  />
-                );
-              })}
-
               {/* 座標ラベル（デバッグ用、小さく表示） */}
               <text
                 x={x}
@@ -590,6 +573,23 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                   playerMarkers={playerMarkers}
                 />
               )}
+
+              {/* プレイヤーごとの可能セルオーバーレイ（最上位レイヤー） */}
+              {!isEmpty && possiblePlayers.map((player) => {
+                const playerColor = PLAYER_ID_TO_COLOR[player.playerId];
+                const color = PLAYER_MARKER_COLORS[playerColor];
+                return (
+                  <polygon
+                    key={player.playerId}
+                    points={getHexPoints(x, y)}
+                    fill={color}
+                    opacity={0.35}
+                    stroke={color}
+                    strokeWidth={2}
+                    strokeOpacity={0.8}
+                  />
+                );
+              })}
             </g>
           );
         })}
