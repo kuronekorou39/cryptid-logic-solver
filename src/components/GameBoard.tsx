@@ -355,40 +355,55 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
               {/* 自動モード */}
               <button
                 onClick={toggleAutoMode}
-                className={`w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
+                className={`relative w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
                   state.autoMode
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-blue-100 text-blue-600'
                     : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
                 title={state.autoMode ? '自動モード ON: マーカーに基づいてヒントを自動計算' : '自動モード OFF: ヒントを手動で切り替え'}
               >
                 ⚡
+                {!state.autoMode && (
+                  <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="w-6 h-0.5 bg-red-500 rotate-45 rounded" />
+                  </span>
+                )}
               </button>
 
               {/* OFFを非表示 */}
               <button
                 onClick={() => setHideOffItems(!hideOffItems)}
-                className={`w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
+                className={`relative w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
                   hideOffItems
-                    ? 'bg-emerald-500 text-white'
+                    ? 'bg-blue-100 text-blue-600'
                     : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
                 title={hideOffItems ? 'OFFのヒントを非表示中' : 'OFFのヒントも表示中'}
               >
                 👁
+                {!hideOffItems && (
+                  <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="w-6 h-0.5 bg-red-500 rotate-45 rounded" />
+                  </span>
+                )}
               </button>
 
               {/* 可能セル色付け */}
               <button
                 onClick={onToggleShowPossibleCells}
-                className={`w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
+                className={`relative w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
                   showPossibleCells
-                    ? 'bg-purple-500 text-white'
+                    ? 'bg-blue-100 text-blue-600'
                     : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
                 title={showPossibleCells ? '可能セルの色付け ON' : '可能セルの色付け OFF'}
               >
                 🎨
+                {!showPossibleCells && (
+                  <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="w-6 h-0.5 bg-red-500 rotate-45 rounded" />
+                  </span>
+                )}
               </button>
             </div>
           </div>
