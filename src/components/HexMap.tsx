@@ -37,10 +37,16 @@ const PLAYER_ID_TO_COLOR: Record<string, PlayerColor> = {
   'ε': 'purple',
 };
 
+// プレイヤーごとの可能セル情報
+interface PlayerPossibleCells {
+  playerId: string;
+  cells: Set<string>;
+}
+
 interface HexMapProps {
   config: MapConfig;
   highlightedCells?: Set<string>; // "col-row" 形式のセット（構造物選択用）
-  possibleCells?: Set<string>;    // 可能性のあるセル（ヒント評価結果）
+  playerPossibleCells?: PlayerPossibleCells[];  // プレイヤーごとの可能セル
   onCellClick?: (col: number, row: number) => void;
   rotation?: 0 | 90 | 180 | 270;
   playerMarkers?: PlayerMarkers;  // プレイヤーマーカー
@@ -447,7 +453,7 @@ const TERRAIN_PATTERN_IDS: Record<TerrainType, string> = {
   water: 'pattern-water',
 };
 
-export function HexMap({ config, highlightedCells, possibleCells, onCellClick, rotation = 0, playerMarkers }: HexMapProps) {
+export function HexMap({ config, highlightedCells, playerPossibleCells, onCellClick, rotation = 0, playerMarkers }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
@@ -502,11 +508,14 @@ export function HexMap({ config, highlightedCells, possibleCells, onCellClick, r
           const { x, y } = hexToPixel(cell.col, cell.row);
           const cellKey = `${cell.col}-${cell.row}`;
           const isHighlighted = highlightedCells?.has(cellKey);
-          const isPossible = possibleCells?.has(cellKey);
           const isEmpty = cell.terrain === null;
 
-          // possibleCellsが設定されている場合、可能でないセルは薄く表示
-          const dimmed = possibleCells && possibleCells.size > 0 && !isPossible && !isEmpty;
+          // このセルが可能なプレイヤーを取得
+          const possiblePlayers = playerPossibleCells?.filter(p => p.cells.has(cellKey)) || [];
+          const hasPossibleCells = playerPossibleCells && playerPossibleCells.some(p => p.cells.size > 0);
+
+          // 可能でないセルは薄く表示
+          const dimmed = hasPossibleCells && possiblePlayers.length === 0 && !isEmpty;
 
           return (
             <g
@@ -518,8 +527,8 @@ export function HexMap({ config, highlightedCells, possibleCells, onCellClick, r
               <polygon
                 points={getHexPoints(x, y)}
                 fill={isEmpty ? '#e5e7eb' : TERRAIN_COLORS[cell.terrain!]}
-                stroke={isHighlighted ? '#fbbf24' : isPossible ? '#10b981' : (isEmpty ? '#d1d5db' : '#fff')}
-                strokeWidth={isHighlighted ? 3 : isPossible ? 2.5 : 1}
+                stroke={isHighlighted ? '#fbbf24' : (isEmpty ? '#d1d5db' : '#fff')}
+                strokeWidth={isHighlighted ? 3 : 1}
                 opacity={dimmed ? 0.35 : 1}
               />
               {/* パターンオーバーレイ */}
@@ -530,14 +539,22 @@ export function HexMap({ config, highlightedCells, possibleCells, onCellClick, r
                   opacity={dimmed ? 0.35 : 1}
                 />
               )}
-              {/* 可能セルのハイライトオーバーレイ */}
-              {isPossible && !isEmpty && (
-                <polygon
-                  points={getHexPoints(x, y)}
-                  fill="#10b981"
-                  opacity={0.25}
-                />
-              )}
+              {/* プレイヤーごとの可能セルオーバーレイ */}
+              {!isEmpty && possiblePlayers.map((player) => {
+                const playerColor = PLAYER_ID_TO_COLOR[player.playerId];
+                const color = PLAYER_MARKER_COLORS[playerColor];
+                return (
+                  <polygon
+                    key={player.playerId}
+                    points={getHexPoints(x, y)}
+                    fill={color}
+                    opacity={0.15}
+                    stroke={color}
+                    strokeWidth={1.5}
+                    strokeOpacity={0.4}
+                  />
+                );
+              })}
 
               {/* 座標ラベル（デバッグ用、小さく表示） */}
               <text

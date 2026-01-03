@@ -130,20 +130,25 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
     return new Set([`${coord.col}-${coord.row}`]);
   }, [selectedStructure, structureCoords]);
 
-  // 可能性のあるセルを計算（選択中のプレイヤーのヒントに基づく）
-  const possibleCells = useMemo(() => {
-    if (!isPlayerEnabled || !selectedPlayer) return undefined;
-
+  // 可能性のあるセルを計算（有効な全プレイヤーのヒントに基づく）
+  const playerPossibleCells = useMemo(() => {
     // マップが未完成なら計算しない
     const allTilesSet = tileConfig.every(t => t.tileId !== null);
     if (!allTilesSet) return undefined;
 
-    return calculatePossibleCells(
-      tileConfig,
-      structureCoords,
-      selectedPlayer.possibleHintIds
-    );
-  }, [isPlayerEnabled, selectedPlayer, tileConfig, structureCoords]);
+    // 有効なプレイヤーの可能セルを計算
+    const enabledPlayers = state.players.filter(p => p.enabled);
+    if (enabledPlayers.length === 0) return undefined;
+
+    return enabledPlayers.map(player => ({
+      playerId: player.id,
+      cells: calculatePossibleCells(
+        tileConfig,
+        structureCoords,
+        player.possibleHintIds
+      )
+    }));
+  }, [state.players, tileConfig, structureCoords]);
 
   // 未設定の数を計算
   const unplacedTiles = tileConfig.filter((t) => t.tileId === null).length;
@@ -167,7 +172,7 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
             <HexMap
               config={mapConfig}
               highlightedCells={highlightedCells}
-              possibleCells={possibleCells}
+              playerPossibleCells={playerPossibleCells}
               onCellClick={handleCellClick}
               rotation={rotation}
               playerMarkers={playerMarkers}
