@@ -55,6 +55,7 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
   });
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
+  const [showAllPlayers, setShowAllPlayers] = useState(false);  // 全プレイヤーの可能セルを表示
 
   // 回転ボタンのハンドラ
   const rotateClockwise = () => {
@@ -130,25 +131,39 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
     return new Set([`${coord.col}-${coord.row}`]);
   }, [selectedStructure, structureCoords]);
 
-  // 可能性のあるセルを計算（有効な全プレイヤーのヒントに基づく）
+  // 可能性のあるセルを計算
   const playerPossibleCells = useMemo(() => {
     // マップが未完成なら計算しない
     const allTilesSet = tileConfig.every(t => t.tileId !== null);
     if (!allTilesSet) return undefined;
 
-    // 有効なプレイヤーの可能セルを計算
-    const enabledPlayers = state.players.filter(p => p.enabled);
-    if (enabledPlayers.length === 0) return undefined;
+    if (showAllPlayers) {
+      // 全プレイヤーモード：有効な全プレイヤーの可能セルを表示
+      const enabledPlayers = state.players.filter(p => p.enabled);
+      if (enabledPlayers.length === 0) return undefined;
 
-    return enabledPlayers.map(player => ({
-      playerId: player.id,
-      cells: calculatePossibleCells(
-        tileConfig,
-        structureCoords,
-        player.possibleHintIds
-      )
-    }));
-  }, [state.players, tileConfig, structureCoords]);
+      return enabledPlayers.map(player => ({
+        playerId: player.id,
+        cells: calculatePossibleCells(
+          tileConfig,
+          structureCoords,
+          player.possibleHintIds
+        )
+      }));
+    } else {
+      // 単体モード：選択中のプレイヤーのみ
+      if (!isPlayerEnabled || !selectedPlayer) return undefined;
+
+      return [{
+        playerId: selectedPlayer.id,
+        cells: calculatePossibleCells(
+          tileConfig,
+          structureCoords,
+          selectedPlayer.possibleHintIds
+        )
+      }];
+    }
+  }, [showAllPlayers, state.players, isPlayerEnabled, selectedPlayer, tileConfig, structureCoords]);
 
   // 未設定の数を計算
   const unplacedTiles = tileConfig.filter((t) => t.tileId === null).length;
@@ -186,6 +201,17 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
               title="90°回転"
             >
               ↻
+            </button>
+            <button
+              onClick={() => setShowAllPlayers(!showAllPlayers)}
+              className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors ${
+                showAllPlayers
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="全プレイヤーの可能範囲を重ねて表示"
+            >
+              ALL
             </button>
             <button
               onClick={() => setShowTiles(!showTiles)}
