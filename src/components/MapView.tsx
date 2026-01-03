@@ -138,18 +138,26 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
     if (!allTilesSet) return undefined;
 
     if (showAllPlayers) {
-      // 全プレイヤーモード：有効な全プレイヤーの可能セルを表示
+      // 全プレイヤーモード：有効な全プレイヤーの可能セルのAND（交差）
       const enabledPlayers = state.players.filter(p => p.enabled);
       if (enabledPlayers.length === 0) return undefined;
 
-      return enabledPlayers.map(player => ({
-        playerId: player.id,
-        cells: calculatePossibleCells(
-          tileConfig,
-          structureCoords,
-          player.possibleHintIds
-        )
-      }));
+      // 各プレイヤーの可能セルを計算
+      const allPossibleCells = enabledPlayers.map(player =>
+        calculatePossibleCells(tileConfig, structureCoords, player.possibleHintIds)
+      );
+
+      // 交差を計算（全プレイヤーが可能としているセルのみ）
+      let intersected: Set<string> = allPossibleCells[0];
+      for (let i = 1; i < allPossibleCells.length; i++) {
+        intersected = new Set([...intersected].filter(key => allPossibleCells[i].has(key)));
+      }
+
+      // 交差結果を「ALL」として返す
+      return [{
+        playerId: 'ALL',
+        cells: intersected
+      }];
     } else {
       // 単体モード：選択中のプレイヤーのみ
       if (!isPlayerEnabled || !selectedPlayer) return undefined;

@@ -29,13 +29,17 @@ const PLAYER_MARKER_COLORS: Record<PlayerColor, string> = {
 };
 
 // プレイヤーIDから色を取得するマッピング
-const PLAYER_ID_TO_COLOR: Record<string, PlayerColor> = {
+const PLAYER_ID_TO_COLOR: Record<string, PlayerColor | 'all'> = {
   'α': 'red',
   'β': 'green',
   'γ': 'blue',
   'δ': 'yellow',
   'ε': 'purple',
+  'ALL': 'all',
 };
+
+// ALL用の色（ゴールド系）
+const ALL_MARKER_COLOR = '#f59e0b';  // amber-500
 
 // プレイヤーごとの可能セル情報
 interface PlayerPossibleCells {
@@ -370,8 +374,10 @@ function CellMarkers({
     <>
       {markers.map((marker, index) => {
         const pos = positions[index];
-        const playerColor = PLAYER_ID_TO_COLOR[marker.playerId];
-        const color = PLAYER_MARKER_COLORS[playerColor];
+        const playerColorKey = PLAYER_ID_TO_COLOR[marker.playerId];
+        const color = playerColorKey === 'all'
+          ? ALL_MARKER_COLOR
+          : PLAYER_MARKER_COLORS[playerColorKey as PlayerColor];
         return (
           <PlayerMarkerIcon
             key={marker.playerId}
@@ -582,8 +588,10 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
 
               {/* プレイヤーごとの可能セルオーバーレイ（最上位レイヤー） */}
               {!isEmpty && possiblePlayers.map((player) => {
-                const playerColor = PLAYER_ID_TO_COLOR[player.playerId];
-                const color = PLAYER_MARKER_COLORS[playerColor];
+                const playerColorKey = PLAYER_ID_TO_COLOR[player.playerId];
+                const color = playerColorKey === 'all'
+                  ? ALL_MARKER_COLOR
+                  : PLAYER_MARKER_COLORS[playerColorKey as PlayerColor];
                 return (
                   <polygon
                     key={player.playerId}
