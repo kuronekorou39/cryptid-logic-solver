@@ -276,13 +276,34 @@ function PlayerMarkerIcon({
     // cube = × (いない)
     return (
       <g>
+        {/* 白い枠線（背景） */}
+        <line
+          x1={x - size}
+          y1={y - size}
+          x2={x + size}
+          y2={y + size}
+          stroke="#fff"
+          strokeWidth={4}
+          strokeLinecap="round"
+        />
+        <line
+          x1={x + size}
+          y1={y - size}
+          x2={x - size}
+          y2={y + size}
+          stroke="#fff"
+          strokeWidth={4}
+          strokeLinecap="round"
+        />
+        {/* 色付き線（前面） */}
         <line
           x1={x - size}
           y1={y - size}
           x2={x + size}
           y2={y + size}
           stroke={color}
-          strokeWidth={2.5}
+          strokeWidth={2}
+          strokeLinecap="round"
         />
         <line
           x1={x + size}
@@ -290,7 +311,8 @@ function PlayerMarkerIcon({
           x2={x - size}
           y2={y + size}
           stroke={color}
-          strokeWidth={2.5}
+          strokeWidth={2}
+          strokeLinecap="round"
         />
       </g>
     );
