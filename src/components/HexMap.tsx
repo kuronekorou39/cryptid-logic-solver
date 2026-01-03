@@ -173,6 +173,18 @@ function AnimalMarker({ animal, x, y }: { animal: AnimalType; x: number; y: numb
   );
 }
 
+// 8角形の頂点を計算
+function getOctagonPoints(cx: number, cy: number, radius: number): string {
+  const points: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI / 4) * i - Math.PI / 2; // 上から開始
+    const px = cx + radius * Math.cos(angle);
+    const py = cy + radius * Math.sin(angle);
+    points.push(`${px},${py}`);
+  }
+  return points.join(' ');
+}
+
 // 構造物アイコン
 function StructureMarker({
   type,
@@ -189,10 +201,10 @@ function StructureMarker({
   const strokeColor = color === 'white' ? '#9ca3af' : '#fff';
 
   if (type === 'stone') {
-    // 巨石: 菱形
+    // 巨石: 8角形
     return (
       <polygon
-        points={`${x},${y - 8} ${x + 6},${y} ${x},${y + 8} ${x - 6},${y}`}
+        points={getOctagonPoints(x, y, 8)}
         fill={fillColor}
         stroke={strokeColor}
         strokeWidth={1.5}
