@@ -514,8 +514,8 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
           const possiblePlayers = playerPossibleCells?.filter(p => p.cells.has(cellKey)) || [];
           const hasPossibleCells = playerPossibleCells && playerPossibleCells.some(p => p.cells.size > 0);
 
-          // 可能でないセルは薄く表示
-          const dimmed = hasPossibleCells && possiblePlayers.length === 0 && !isEmpty;
+          // 可能セル表示中はマップ全体を薄く表示（オーバーレイで強調）
+          const dimmed = hasPossibleCells && !isEmpty;
 
           return (
             <g
