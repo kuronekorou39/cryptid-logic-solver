@@ -106,6 +106,74 @@ function hintMatchesTerrain(hint: Hint, terrain: TerrainType): boolean {
   return hint.condition.terrains?.includes(terrain) ?? false
 }
 
+// ヒントテキストをスタイル付きで表示
+function StyledHintText({ text, isOn }: { text: string; isOn: boolean }) {
+  // パターンと対応するスタイル
+  const patterns: { pattern: RegExp; className: string }[] = [
+    // 「いない」を赤に
+    { pattern: /いない/g, className: 'text-red-500 font-medium' },
+    // 数字を太字に
+    { pattern: /[0-9]+/g, className: 'font-bold' },
+    // 地形名を各色に
+    { pattern: /森林/g, className: 'text-green-700 font-medium' },
+    { pattern: /砂漠/g, className: 'text-yellow-600 font-medium' },
+    { pattern: /沼地/g, className: 'text-purple-600 font-medium' },
+    { pattern: /山岳/g, className: 'text-gray-600 font-medium' },
+    { pattern: /水辺/g, className: 'text-cyan-600 font-medium' },
+    // 構造物
+    { pattern: /巨石/g, className: 'text-teal-600 font-medium' },
+    { pattern: /廃墟/g, className: 'text-orange-700 font-medium' },
+    // 構造物の色
+    { pattern: /青の/g, className: 'text-indigo-600 font-medium' },
+    { pattern: /緑の/g, className: 'text-teal-600 font-medium' },
+    { pattern: /白の/g, className: 'text-gray-500 font-medium' },
+    { pattern: /黒の/g, className: 'text-gray-800 font-medium' },
+    // 動物
+    { pattern: /クマ/g, className: 'text-stone-700 font-medium' },
+    { pattern: /ワシ/g, className: 'text-red-600 font-medium' },
+    { pattern: /動物/g, className: 'text-amber-600 font-medium' },
+  ]
+
+  // テキストを分割してスタイル適用
+  type Part = { text: string; className?: string }
+  let parts: Part[] = [{ text }]
+
+  for (const { pattern, className } of patterns) {
+    const newParts: Part[] = []
+    for (const part of parts) {
+      if (part.className) {
+        // 既にスタイル適用済みならそのまま
+        newParts.push(part)
+      } else {
+        // パターンで分割
+        const matches = part.text.matchAll(pattern)
+        let lastIndex = 0
+        for (const match of matches) {
+          if (match.index! > lastIndex) {
+            newParts.push({ text: part.text.slice(lastIndex, match.index) })
+          }
+          newParts.push({ text: match[0], className })
+          lastIndex = match.index! + match[0].length
+        }
+        if (lastIndex < part.text.length) {
+          newParts.push({ text: part.text.slice(lastIndex) })
+        }
+      }
+    }
+    parts = newParts.length > 0 ? newParts : parts
+  }
+
+  return (
+    <span className={!isOn ? 'line-through opacity-60' : ''}>
+      {parts.map((part, i) => (
+        <span key={i} className={isOn ? part.className : ''}>
+          {part.text}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 // ヒントのソートキーを取得（肯定形と否定形をペアにする）
 function getHintSortKey(hint: Hint): string {
   // IDから n- または a- プレフィックスと -not サフィックスを除去してベースIDを取得
@@ -317,7 +385,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) 
                           {icons}
                         </span>
                       )}
-                      <span className={isOn ? '' : 'line-through'}>{hint.text}</span>
+                      <StyledHintText text={hint.text} isOn={isOn} />
                     </button>
                   )
                 })}
