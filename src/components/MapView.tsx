@@ -4,6 +4,7 @@ import { type MapConfig } from '../data/map-tiles';
 import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, TileIcon } from './Icons';
 import { GameContext } from '../context/GameContext';
 import type { StructureColor, MarkerType } from '../types';
+import { calculatePossibleCells } from '../logic/possible-cells';
 
 interface MapViewProps {
   selectedPlayerId: string;
@@ -129,6 +130,21 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
     return new Set([`${coord.col}-${coord.row}`]);
   }, [selectedStructure, structureCoords]);
 
+  // 可能性のあるセルを計算（選択中のプレイヤーのヒントに基づく）
+  const possibleCells = useMemo(() => {
+    if (!isPlayerEnabled || !selectedPlayer) return undefined;
+
+    // マップが未完成なら計算しない
+    const allTilesSet = tileConfig.every(t => t.tileId !== null);
+    if (!allTilesSet) return undefined;
+
+    return calculatePossibleCells(
+      tileConfig,
+      structureCoords,
+      selectedPlayer.possibleHintIds
+    );
+  }, [isPlayerEnabled, selectedPlayer, tileConfig, structureCoords]);
+
   // 未設定の数を計算
   const unplacedTiles = tileConfig.filter((t) => t.tileId === null).length;
   const unplacedStones = STRUCTURE_DEFS
@@ -151,6 +167,7 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
             <HexMap
               config={mapConfig}
               highlightedCells={highlightedCells}
+              possibleCells={possibleCells}
               onCellClick={handleCellClick}
               rotation={rotation}
               playerMarkers={playerMarkers}

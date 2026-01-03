@@ -39,7 +39,8 @@ const PLAYER_ID_TO_COLOR: Record<string, PlayerColor> = {
 
 interface HexMapProps {
   config: MapConfig;
-  highlightedCells?: Set<string>; // "col-row" 形式のセット
+  highlightedCells?: Set<string>; // "col-row" 形式のセット（構造物選択用）
+  possibleCells?: Set<string>;    // 可能性のあるセル（ヒント評価結果）
   onCellClick?: (col: number, row: number) => void;
   rotation?: 0 | 90 | 180 | 270;
   playerMarkers?: PlayerMarkers;  // プレイヤーマーカー
@@ -446,7 +447,7 @@ const TERRAIN_PATTERN_IDS: Record<TerrainType, string> = {
   water: 'pattern-water',
 };
 
-export function HexMap({ config, highlightedCells, onCellClick, rotation = 0, playerMarkers }: HexMapProps) {
+export function HexMap({ config, highlightedCells, possibleCells, onCellClick, rotation = 0, playerMarkers }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
@@ -501,7 +502,11 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0, pl
           const { x, y } = hexToPixel(cell.col, cell.row);
           const cellKey = `${cell.col}-${cell.row}`;
           const isHighlighted = highlightedCells?.has(cellKey);
+          const isPossible = possibleCells?.has(cellKey);
           const isEmpty = cell.terrain === null;
+
+          // possibleCellsが設定されている場合、可能でないセルは薄く表示
+          const dimmed = possibleCells && possibleCells.size > 0 && !isPossible && !isEmpty;
 
           return (
             <g
@@ -513,16 +518,24 @@ export function HexMap({ config, highlightedCells, onCellClick, rotation = 0, pl
               <polygon
                 points={getHexPoints(x, y)}
                 fill={isEmpty ? '#e5e7eb' : TERRAIN_COLORS[cell.terrain!]}
-                stroke={isHighlighted ? '#fbbf24' : (isEmpty ? '#d1d5db' : '#fff')}
-                strokeWidth={isHighlighted ? 3 : 1}
-                opacity={isHighlighted === false && highlightedCells ? 0.4 : 1}
+                stroke={isHighlighted ? '#fbbf24' : isPossible ? '#10b981' : (isEmpty ? '#d1d5db' : '#fff')}
+                strokeWidth={isHighlighted ? 3 : isPossible ? 2.5 : 1}
+                opacity={dimmed ? 0.35 : 1}
               />
               {/* パターンオーバーレイ */}
               {!isEmpty && (
                 <polygon
                   points={getHexPoints(x, y)}
                   fill={`url(#${TERRAIN_PATTERN_IDS[cell.terrain!]})`}
-                  opacity={isHighlighted === false && highlightedCells ? 0.4 : 1}
+                  opacity={dimmed ? 0.35 : 1}
+                />
+              )}
+              {/* 可能セルのハイライトオーバーレイ */}
+              {isPossible && !isEmpty && (
+                <polygon
+                  points={getHexPoints(x, y)}
+                  fill="#10b981"
+                  opacity={0.25}
                 />
               )}
 
