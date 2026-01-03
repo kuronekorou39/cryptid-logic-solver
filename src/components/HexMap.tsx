@@ -38,8 +38,8 @@ const PLAYER_ID_TO_COLOR: Record<string, PlayerColor | 'all'> = {
   'ALL': 'all',
 };
 
-// ALL用の色（ゴールド系）
-const ALL_MARKER_COLOR = '#f59e0b';  // amber-500
+// ALL用の色（濃いオレンジ系）
+const ALL_MARKER_COLOR = '#ea580c';  // orange-600
 
 // プレイヤーごとの可能セル情報
 interface PlayerPossibleCells {
@@ -589,7 +589,8 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
               {/* プレイヤーごとの可能セルオーバーレイ（最上位レイヤー） */}
               {!isEmpty && possiblePlayers.map((player) => {
                 const playerColorKey = PLAYER_ID_TO_COLOR[player.playerId];
-                const color = playerColorKey === 'all'
+                const isAll = playerColorKey === 'all';
+                const color = isAll
                   ? ALL_MARKER_COLOR
                   : PLAYER_MARKER_COLORS[playerColorKey as PlayerColor];
                 return (
@@ -597,10 +598,10 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                     key={player.playerId}
                     points={getHexPoints(x, y)}
                     fill={color}
-                    opacity={0.35}
+                    opacity={isAll ? 0.55 : 0.35}
                     stroke={color}
-                    strokeWidth={2}
-                    strokeOpacity={0.8}
+                    strokeWidth={isAll ? 3 : 2}
+                    strokeOpacity={isAll ? 1 : 0.8}
                   />
                 );
               })}
