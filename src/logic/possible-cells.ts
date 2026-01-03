@@ -64,7 +64,9 @@ export function evaluateHintOnMap(
 
 /**
  * プレイヤーのONヒントに基づいて可能セルを計算
- * 全てのONヒントを満たすセルのみが可能
+ * ONヒント = まだ可能性が残っているヒント
+ * いずれかのONヒントを満たすセルが可能（OR条件）
+ * ヒントをOFFにするほど、可能セルが絞られていく
  */
 export function calculatePossibleCells(
   tiles: TileConfig[],
@@ -79,16 +81,21 @@ export function calculatePossibleCells(
     .map((id) => getHintById(id))
     .filter((h): h is Hint => h !== undefined)
 
+  // ヒントがない場合は可能セルなし
+  if (hints.length === 0) {
+    return possibleCells
+  }
+
   // 各セルをチェック
   grid.cells.forEach((cell) => {
     if (!cell.terrain) return // 未設定のセルはスキップ
 
-    // 全てのヒントを満たすかチェック
-    const allMatch = hints.every((hint) =>
+    // いずれかのヒントを満たすかチェック（OR条件）
+    const anyMatch = hints.some((hint) =>
       evaluateHintOnMap(hint, grid, cell.col, cell.row)
     )
 
-    if (allMatch) {
+    if (anyMatch) {
       possibleCells.add(cell.key)
     }
   })
