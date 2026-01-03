@@ -1,4 +1,4 @@
-import type { TerrainType, AnimalType, StructureColor, CellInfo, TileConfig, StructureCoord } from '../types'
+import type { TerrainType, AnimalType, StructureColor, StructureType, CellInfo, TileConfig, StructureCoord } from '../types'
 import { MAP_TILES, rotateTile180 } from '../data/map-tiles'
 
 // ========================================
@@ -11,7 +11,7 @@ export interface MapCell {
   row: number           // 0-8 (9行)
   terrain: TerrainType | null
   animal: AnimalType | null
-  structure: { color: StructureColor } | null
+  structure: { type: StructureType; color: StructureColor } | null
 }
 
 export interface MapGrid {
@@ -164,9 +164,11 @@ export function buildMapGrid(
     const key = cellKey(coord.col, coord.row)
     const cell = cells.get(key)
     if (cell) {
-      // IDから色を抽出（例: "stone-green" → "green"）
-      const color = id.split('-')[1] as StructureColor
-      cell.structure = { color }
+      // IDからタイプと色を抽出（例: "stone-green" → type="standing_stone", color="green"）
+      const [typeStr, colorStr] = id.split('-')
+      const type: StructureType = typeStr === 'stone' ? 'standing_stone' : 'shack'
+      const color = colorStr as StructureColor
+      cell.structure = { type, color }
     }
   })
 
@@ -189,7 +191,7 @@ export function getCellInfo(grid: MapGrid, col: number, row: number): CellInfo |
   }
 
   // 周辺の構造物を収集
-  const nearStructures: { color: StructureColor; distance: number }[] = []
+  const nearStructures: { type: StructureType; color: StructureColor; distance: number }[] = []
   // 周辺の動物を収集
   const nearAnimals: { animal: AnimalType; distance: number }[] = []
 
@@ -202,7 +204,11 @@ export function getCellInfo(grid: MapGrid, col: number, row: number): CellInfo |
 
     // 構造物
     if (otherCell.structure && dist > 0) {
-      nearStructures.push({ color: otherCell.structure.color, distance: dist })
+      nearStructures.push({
+        type: otherCell.structure.type,
+        color: otherCell.structure.color,
+        distance: dist,
+      })
     }
 
     // 動物
@@ -214,6 +220,7 @@ export function getCellInfo(grid: MapGrid, col: number, row: number): CellInfo |
   return {
     terrain: cell.terrain,
     structureColor: cell.structure?.color || null,
+    structureType: cell.structure?.type || null,
     nearStructures,
     animalTerritory: cell.animal,
     nearAnimals,
@@ -293,6 +300,34 @@ export function hasAnyStructureWithinRange(
 
   for (const [, cell] of grid.cells) {
     if (!cell.structure) continue
+
+    const dist = hexDistance(col, row, cell.col, cell.row)
+    if (dist <= range) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * 指定範囲内に特定タイプの構造物があるかチェック
+ */
+export function hasStructureTypeWithinRange(
+  grid: MapGrid,
+  col: number,
+  row: number,
+  types: StructureType[],
+  range: number
+): boolean {
+  if (range === 0) {
+    const cell = grid.cells.get(cellKey(col, row))
+    return cell?.structure !== null && cell?.structure !== undefined && types.includes(cell.structure.type)
+  }
+
+  for (const [, cell] of grid.cells) {
+    if (!cell.structure) continue
+    if (!types.includes(cell.structure.type)) continue
 
     const dist = hexDistance(col, row, cell.col, cell.row)
     if (dist <= range) {

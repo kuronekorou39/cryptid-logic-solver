@@ -152,14 +152,14 @@ export const hintsAdvanced: Hint[] = [
     text: '巨石から2マス以内にいない',
     mode: 'advanced',
     category: 'structure',
-    condition: { structureColors: ['green', 'blue'], range: 2, negated: true },
+    condition: { structureTypes: ['standing_stone'], range: 2, negated: true },
   },
   {
     id: 'a-structure-shack-2-not',
     text: '廃墟から2マス以内にいない',
     mode: 'advanced',
     category: 'structure',
-    condition: { structureColors: ['white', 'black'], range: 2, negated: true },
+    condition: { structureTypes: ['shack'], range: 2, negated: true },
   },
 
   // ========================================

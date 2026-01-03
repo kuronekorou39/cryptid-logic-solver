@@ -132,14 +132,14 @@ export const hintsNormal: Hint[] = [
     text: '巨石から2マス以内にいる',
     mode: 'normal',
     category: 'structure',
-    condition: { structureColors: ['green', 'blue'], range: 2 },
+    condition: { structureTypes: ['standing_stone'], range: 2 },
   },
   {
     id: 'n-structure-shack-2',
     text: '廃墟から2マス以内にいる',
     mode: 'normal',
     category: 'structure',
-    condition: { structureColors: ['white', 'black'], range: 2 },
+    condition: { structureTypes: ['shack'], range: 2 },
   },
   {
     id: 'n-animal-cougar-2',

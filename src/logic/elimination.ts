@@ -24,7 +24,7 @@ export function evaluateHint(hint: Hint, cellInfo: CellInfo): boolean {
     }
   }
 
-  // 構造物条件の評価
+  // 構造物条件の評価（色による条件）
   if (condition.structureColors && condition.structureColors.length > 0) {
     // 特定色の構造物
     if (condition.range === 0) {
@@ -34,6 +34,20 @@ export function evaluateHint(hint: Hint, cellInfo: CellInfo): boolean {
       // range マス以内に構造物がある
       const matchingStructure = cellInfo.nearStructures.find(
         (s) => condition.structureColors!.includes(s.color) && s.distance <= condition.range
+      )
+      result = matchingStructure !== undefined
+    }
+  }
+
+  // 構造物条件の評価（タイプによる条件：巨石/廃墟）
+  if (condition.structureTypes && condition.structureTypes.length > 0) {
+    if (condition.range === 0) {
+      // 構造物の上にいる
+      result = cellInfo.structureType !== null && condition.structureTypes.includes(cellInfo.structureType)
+    } else {
+      // range マス以内に構造物がある
+      const matchingStructure = cellInfo.nearStructures.find(
+        (s) => condition.structureTypes!.includes(s.type) && s.distance <= condition.range
       )
       result = matchingStructure !== undefined
     }

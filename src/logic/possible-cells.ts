@@ -6,6 +6,7 @@ import {
   cellKey,
   hasTerrainWithinRange,
   hasStructureWithinRange,
+  hasStructureTypeWithinRange,
   hasAnyStructureWithinRange,
   hasAnimalWithinRange,
   hasAnyAnimalWithinRange,
@@ -40,6 +41,10 @@ export function evaluateHintOnMap(
   // 構造物条件の評価
   if (condition.structureColors && condition.structureColors.length > 0) {
     result = hasStructureWithinRange(grid, col, row, condition.structureColors, condition.range)
+  }
+
+  if (condition.structureTypes && condition.structureTypes.length > 0) {
+    result = hasStructureTypeWithinRange(grid, col, row, condition.structureTypes, condition.range)
   }
 
   if (condition.anyStructure) {

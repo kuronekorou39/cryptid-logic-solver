@@ -34,6 +34,7 @@ export interface HintCondition {
 
   // 構造物条件
   structureColors?: StructureColor[]; // 特定色（複数指定時はOR）
+  structureTypes?: StructureType[]; // 構造物タイプ（巨石/廃墟）
   anyStructure?: boolean; // いずれかの構造物
 
   // 動物条件
@@ -80,7 +81,8 @@ export interface Cell {
 export interface CellInfo {
   terrain: TerrainType;
   structureColor: StructureColor | null;
-  nearStructures: { color: StructureColor; distance: number }[];
+  structureType: StructureType | null;
+  nearStructures: { type: StructureType; color: StructureColor; distance: number }[];
   animalTerritory: AnimalType | null;
   nearAnimals: { animal: AnimalType; distance: number }[];
 }

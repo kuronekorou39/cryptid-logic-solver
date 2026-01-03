@@ -65,30 +65,34 @@ function getHintIcons(hint: Hint): React.ReactNode[] {
     )
   }
 
-  if (condition.structureColors) {
-    const colors = condition.structureColors
-    if (colors.includes('green') && colors.includes('blue') && colors.length === 2) {
+  if (condition.structureTypes) {
+    const types = condition.structureTypes
+    if (types.includes('standing_stone')) {
       icons.push(
         <span key="stone" className="text-teal-600">
           <GreenStoneIcon />
         </span>
       )
-    } else if (colors.includes('white') && colors.includes('black') && colors.length === 2) {
+    }
+    if (types.includes('shack')) {
       icons.push(
         <span key="shack" className="text-gray-600">
           <WhiteShackIcon />
         </span>
       )
-    } else {
-      colors.forEach((c, i) => {
-        const info = structureIcons[c]
-        icons.push(
-          <span key={`structure-${i}`} className={info.color}>
-            {info.icon}
-          </span>
-        )
-      })
     }
+  }
+
+  if (condition.structureColors) {
+    const colors = condition.structureColors
+    colors.forEach((c, i) => {
+      const info = structureIcons[c]
+      icons.push(
+        <span key={`structure-${i}`} className={info.color}>
+          {info.icon}
+        </span>
+      )
+    })
   }
   if (condition.anyStructure) {
     icons.push(
