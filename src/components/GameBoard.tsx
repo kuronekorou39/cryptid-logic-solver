@@ -106,9 +106,13 @@ function hintMatchesTerrain(hint: Hint, terrain: TerrainType): boolean {
   return hint.condition.terrains?.includes(terrain) ?? false
 }
 
-export function GameBoard() {
+interface GameBoardProps {
+  selectedPlayerId: string
+  onSelectPlayer: (playerId: string) => void
+}
+
+export function GameBoard({ selectedPlayerId, onSelectPlayer }: GameBoardProps) {
   const { state, toggleHint, togglePlayer, setPlayerName } = useGame()
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>(state.players[0]?.id || 'α')
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
   const [editingName, setEditingName] = useState(false)
@@ -182,7 +186,7 @@ export function GameBoard() {
             return (
               <button
                 key={player.id}
-                onClick={() => setSelectedPlayerId(player.id)}
+                onClick={() => onSelectPlayer(player.id)}
                 className={`relative flex-1 min-w-0 py-2 px-1 text-center transition-all border-b-2 ${
                   isSelected
                     ? `${colorInfo.bgClass} text-white border-transparent`

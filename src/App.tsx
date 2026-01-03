@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { GameProvider } from './context/GameContext'
 import { GameBoard } from './components/GameBoard'
 import { MapView } from './components/MapView'
 import { Header } from './components/Header'
 
 function App() {
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('α')
+
   return (
     <GameProvider>
       <div className="h-screen flex flex-col bg-gray-100">
@@ -11,12 +14,15 @@ function App() {
         <main className="flex-1 flex flex-col overflow-hidden container mx-auto px-3 py-3 max-w-2xl">
           {/* マップ（固定表示） */}
           <div className="flex-shrink-0">
-            <MapView />
+            <MapView selectedPlayerId={selectedPlayerId} />
           </div>
 
           {/* ヒント管理（スクロール領域） */}
           <div className="flex-1 overflow-y-auto mt-3">
-            <GameBoard />
+            <GameBoard
+              selectedPlayerId={selectedPlayerId}
+              onSelectPlayer={setSelectedPlayerId}
+            />
           </div>
         </main>
       </div>
