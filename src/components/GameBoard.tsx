@@ -303,39 +303,37 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
       {/* オプションバー（有効なプレイヤーのみ表示） */}
       {selectedPlayer?.enabled && (
         <div className="bg-white rounded-xl shadow px-3 py-2 mb-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* 参加解除ボタン（目立たない） */}
+          <div className="flex items-center gap-1.5">
+            {/* 参加解除ボタン */}
             <button
               onClick={() => togglePlayer(selectedPlayer.id)}
-              className="text-gray-300 hover:text-red-400 text-xs px-1 transition-colors"
+              className="text-gray-300 hover:text-red-400 text-xs transition-colors"
               title="参加解除"
             >
-              ×解除
+              ×
             </button>
 
             {/* 自分設定ボタン */}
             <button
               onClick={() => setSelfPlayer(state.selfPlayerId === selectedPlayer.id ? null : selectedPlayer.id)}
-              className={`text-xs px-2 py-0.5 rounded transition-colors ${
+              className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
                 state.selfPlayerId === selectedPlayer.id
                   ? 'bg-amber-500 text-white'
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
               title={state.selfPlayerId === selectedPlayer.id ? '自分設定を解除' : 'このプレイヤーを自分として設定'}
             >
-              {state.selfPlayerId === selectedPlayer.id ? '★自分' : '自分に設定'}
+              {state.selfPlayerId === selectedPlayer.id ? '★自分' : '自分'}
             </button>
-
-            <div className="flex-1" />
 
             {/* 確定ボタン（残り1つで未確定の場合のみ表示） */}
             {selectedPlayer.possibleHintIds.length === 1 && !selectedPlayer.confirmedHintId && (
               <button
                 onClick={() => confirmHint(selectedPlayer.id, selectedPlayer.possibleHintIds[0])}
-                className="text-xs px-2 py-0.5 rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                className="text-xs px-1.5 py-0.5 rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors"
                 title="残り1つのヒントを確定する"
               >
-                確定する
+                確定
               </button>
             )}
 
@@ -343,65 +341,56 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
             {selectedPlayer.confirmedHintId && (
               <button
                 onClick={() => unconfirmHint(selectedPlayer.id)}
-                className="text-xs px-2 py-0.5 rounded bg-gray-400 text-white hover:bg-gray-500 transition-colors"
+                className="text-xs px-1.5 py-0.5 rounded bg-gray-400 text-white hover:bg-gray-500 transition-colors"
                 title="確定を解除する"
               >
-                確定解除
+                解除
               </button>
             )}
 
-            <div className="w-px h-4 bg-gray-300 mx-1" />
+            <div className="flex-1" />
 
-            {/* 自動モードトグル */}
-            <span className="text-xs text-gray-400">自動</span>
-            <button
-              onClick={toggleAutoMode}
-              className={`w-8 h-4 rounded-full relative transition-colors ${
-                state.autoMode ? 'bg-blue-500' : 'bg-gray-300'
-              }`}
-              title={state.autoMode ? '自動モード: マーカーに基づいてヒントを自動計算' : '手動モード: ヒントを手動で切り替え'}
-            >
-              <div
-                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
-                  state.autoMode ? 'translate-x-4' : 'translate-x-0.5'
+            {/* アイコンボタン群（トグル） */}
+            <div className="flex items-center gap-1">
+              {/* 自動モード */}
+              <button
+                onClick={toggleAutoMode}
+                className={`w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
+                  state.autoMode
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
-              />
-            </button>
+                title={state.autoMode ? '自動モード ON: マーカーに基づいてヒントを自動計算' : '自動モード OFF: ヒントを手動で切り替え'}
+              >
+                ⚡
+              </button>
 
-            <div className="w-px h-4 bg-gray-300 mx-1" />
-
-            {/* OFFを非表示トグル */}
-            <span className="text-xs text-gray-400">OFF非表示</span>
-            <button
-              onClick={() => setHideOffItems(!hideOffItems)}
-              className={`w-8 h-4 rounded-full relative transition-colors ${
-                hideOffItems ? 'bg-emerald-500' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
-                  hideOffItems ? 'translate-x-4' : 'translate-x-0.5'
+              {/* OFFを非表示 */}
+              <button
+                onClick={() => setHideOffItems(!hideOffItems)}
+                className={`w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
+                  hideOffItems
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
-              />
-            </button>
+                title={hideOffItems ? 'OFFのヒントを非表示中' : 'OFFのヒントも表示中'}
+              >
+                👁
+              </button>
 
-            <div className="w-px h-4 bg-gray-300 mx-1" />
-
-            {/* 可能セル色付け表示トグル */}
-            <span className="text-xs text-gray-400">色付け</span>
-            <button
-              onClick={onToggleShowPossibleCells}
-              className={`w-8 h-4 rounded-full relative transition-colors ${
-                showPossibleCells ? 'bg-purple-500' : 'bg-gray-300'
-              }`}
-              title={showPossibleCells ? '可能セルの色付けを非表示にする' : '可能セルの色付けを表示する'}
-            >
-              <div
-                className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
-                  showPossibleCells ? 'translate-x-4' : 'translate-x-0.5'
+              {/* 可能セル色付け */}
+              <button
+                onClick={onToggleShowPossibleCells}
+                className={`w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center ${
+                  showPossibleCells
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
-              />
-            </button>
+                title={showPossibleCells ? '可能セルの色付け ON' : '可能セルの色付け OFF'}
+              >
+                🎨
+              </button>
+            </div>
           </div>
         </div>
       )}
