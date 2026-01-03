@@ -548,10 +548,10 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                     key={player.playerId}
                     points={getHexPoints(x, y)}
                     fill={color}
-                    opacity={0.15}
+                    opacity={0.35}
                     stroke={color}
-                    strokeWidth={1.5}
-                    strokeOpacity={0.4}
+                    strokeWidth={2}
+                    strokeOpacity={0.8}
                   />
                 );
               })}
