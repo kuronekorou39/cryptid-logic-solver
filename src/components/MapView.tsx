@@ -205,26 +205,9 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
               dimmed={isStructureEditMode}
             />
           </div>
-          {/* 右側ボタン群（上寄せ） */}
+          {/* 右側ボタン群 */}
           <div className="flex flex-col gap-2 flex-shrink-0">
-            <button
-              onClick={rotateClockwise}
-              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg text-xl font-bold text-gray-600 transition-colors"
-              title="90°回転"
-            >
-              ↻
-            </button>
-            <button
-              onClick={() => setShowAllPlayers(!showAllPlayers)}
-              className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors ${
-                showAllPlayers
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              title="全プレイヤーの可能範囲を重ねて表示"
-            >
-              ALL
-            </button>
+            {/* マップ設定ボタン（タイル→巨石→廃墟） */}
             <button
               onClick={() => setShowTiles(!showTiles)}
               className={`relative w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
@@ -233,9 +216,13 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
               title="タイル設定"
             >
               <TileIcon className="w-5 h-5" />
-              {unplacedTiles > 0 && (
+              {unplacedTiles > 0 ? (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   {unplacedTiles}
+                </span>
+              ) : (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                  ✓
                 </span>
               )}
             </button>
@@ -247,9 +234,13 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
               title="巨石設定"
             >
               <GreenStoneIcon className="w-5 h-5" />
-              {unplacedStones > 0 && (
+              {unplacedStones > 0 ? (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   {unplacedStones}
+                </span>
+              ) : (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                  ✓
                 </span>
               )}
             </button>
@@ -261,11 +252,35 @@ export function MapView({ selectedPlayerId }: MapViewProps) {
               title="廃墟設定"
             >
               <WhiteShackIcon className="w-5 h-5" />
-              {unplacedShacks > 0 && (
+              {unplacedShacks > 0 ? (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   {unplacedShacks}
                 </span>
+              ) : (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                  ✓
+                </span>
               )}
+            </button>
+            {/* 表示オプション */}
+            <button
+              onClick={() => setShowAllPlayers(!showAllPlayers)}
+              className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors ${
+                showAllPlayers
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="全プレイヤーの可能範囲を重ねて表示"
+            >
+              ALL
+            </button>
+            {/* 回転ボタン（右下） */}
+            <button
+              onClick={rotateClockwise}
+              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg text-xl font-bold text-gray-600 transition-colors"
+              title="90°回転"
+            >
+              ↻
             </button>
           </div>
         </div>
