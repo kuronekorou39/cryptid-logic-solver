@@ -5,6 +5,8 @@ import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, TileIcon } from './Icons
 import { GameContext } from '../context/GameContext';
 import type { StructureColor, MarkerType } from '../types';
 import { calculatePossibleCells } from '../logic/possible-cells';
+import { findValidCombinations, canRunSolver, type SolverResult } from '../logic/solver';
+import { PLAYER_COLOR_MAP } from '../data';
 
 interface MapViewProps {
   selectedPlayerId: string;
@@ -57,6 +59,11 @@ export function MapView({ selectedPlayerId, showPossibleCells }: MapViewProps) {
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
   const [showAllPlayers, setShowAllPlayers] = useState(false);  // 全プレイヤーの可能セルを表示
+
+  // ソルバー状態
+  const [showSolver, setShowSolver] = useState(false);
+  const [solverResults, setSolverResults] = useState<SolverResult | null>(null);
+  const [solverViewMode, setSolverViewMode] = useState<'summary' | 'detail'>('summary');
 
   // 回転ボタンのハンドラ
   const rotateClockwise = () => {
@@ -174,6 +181,29 @@ export function MapView({ selectedPlayerId, showPossibleCells }: MapViewProps) {
     }
   }, [showAllPlayers, state.players, isPlayerEnabled, selectedPlayer, tileConfig, structureCoords]);
 
+  // ソルバー実行可能かチェック
+  const solverStatus = useMemo(() => {
+    return canRunSolver(state.mapSettings.tiles, state.selfPlayerId, state.players);
+  }, [state.mapSettings.tiles, state.selfPlayerId, state.players]);
+
+  // ソルバー実行
+  const runSolver = () => {
+    const results = findValidCombinations(
+      state.mapSettings.tiles,
+      state.mapSettings.structureCoords,
+      state.players,
+      state.selfPlayerId
+    );
+    setSolverResults(results);
+  };
+
+  // ソルバー候補セルをハイライト用に抽出
+  const solverCandidateCells = useMemo(() => {
+    if (!showSolver || !solverResults || solverResults.items.length === 0) return undefined;
+    const cells = new Set(solverResults.items.map(item => item.answerCell));
+    return cells;
+  }, [showSolver, solverResults]);
+
   // 未設定の数を計算
   const unplacedTiles = tileConfig.filter((t) => t.tileId === null).length;
   const unplacedStones = STRUCTURE_DEFS
@@ -199,6 +229,7 @@ export function MapView({ selectedPlayerId, showPossibleCells }: MapViewProps) {
             <HexMap
               config={mapConfig}
               highlightedCells={highlightedCells}
+              solverCandidateCells={solverCandidateCells}
               playerPossibleCells={isStructureEditMode || !showPossibleCells ? undefined : playerPossibleCells}
               onCellClick={handleCellClick}
               rotation={rotation}
@@ -497,6 +528,170 @@ export function MapView({ selectedPlayerId, showPossibleCells }: MapViewProps) {
           </button>
         </div>
       )}
+
+      {/* 解の候補パネル */}
+      <div className="bg-white rounded-xl shadow p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-medium text-gray-600 text-sm flex items-center gap-1">
+            🔍 解の候補
+          </h4>
+          <button
+            onClick={() => setShowSolver(!showSolver)}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              showSolver ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {showSolver ? '閉じる' : '開く'}
+          </button>
+        </div>
+
+        {showSolver && (
+          <div className="space-y-3">
+            {/* 実行条件チェック */}
+            {!solverStatus.canRun ? (
+              <div className="text-sm text-gray-500 bg-gray-50 rounded p-3">
+                <p className="text-orange-600">⚠️ {solverStatus.reason}</p>
+              </div>
+            ) : solverResults === null ? (
+              /* 未計算状態 */
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-2">候補を計算していません</p>
+                <button
+                  onClick={runSolver}
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  計算開始
+                </button>
+              </div>
+            ) : solverResults.items.length === 0 ? (
+              /* 結果なし */
+              <div className="text-center text-gray-500 py-4">
+                <div className="text-2xl mb-1">🤔</div>
+                <p className="text-sm">答えが1マスになる組み合わせが見つかりませんでした</p>
+                <button
+                  onClick={runSolver}
+                  className="mt-2 px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors"
+                >
+                  再計算
+                </button>
+              </div>
+            ) : (
+              /* 結果あり */
+              <div className="space-y-2">
+                {/* 確定済みヒント */}
+                {solverResults.confirmedHints.length > 0 && (
+                  <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 space-y-1">
+                    <div className="text-xs text-blue-600">確定済みヒント</div>
+                    {solverResults.confirmedHints.map((hint) => {
+                      const colorInfo = PLAYER_COLOR_MAP[hint.playerColor as keyof typeof PLAYER_COLOR_MAP];
+                      return (
+                        <div key={hint.playerId} className="flex items-center gap-2 text-xs">
+                          <span className={`flex-shrink-0 px-1 py-0.5 rounded text-white text-xs ${colorInfo?.bgClass || 'bg-gray-400'}`}>
+                            {hint.isSelf && '👤'}{hint.playerSymbol}
+                          </span>
+                          <span className="text-gray-700">{hint.hintText}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* 表示切替タブ */}
+                <div className="flex items-center justify-between">
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setSolverViewMode('summary')}
+                      className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                        solverViewMode === 'summary'
+                          ? 'bg-white text-gray-800 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      一覧
+                    </button>
+                    <button
+                      onClick={() => setSolverViewMode('detail')}
+                      className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                        solverViewMode === 'detail'
+                          ? 'bg-white text-gray-800 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      詳細
+                    </button>
+                  </div>
+                  <button
+                    onClick={runSolver}
+                    className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors"
+                  >
+                    再計算
+                  </button>
+                </div>
+
+                {solverViewMode === 'summary' ? (
+                  /* 一覧表示 */
+                  <div>
+                    {(() => {
+                      const uniqueCells = [...new Set(solverResults.items.map(r => r.answerLabel))].sort();
+                      return (
+                        <>
+                          <p className="text-xs text-gray-500 mb-2">
+                            {uniqueCells.length}マスの候補
+                            {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
+                            {solverResults.skippedCount > 0 && (
+                              <span className="text-gray-400 ml-1">
+                                （各マス3件まで、{solverResults.skippedCount}件省略）
+                              </span>
+                            )}
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {uniqueCells.map((label) => (
+                              <span
+                                key={label}
+                                className="px-2 py-1 bg-orange-100 text-orange-700 rounded font-medium text-xs"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  /* 詳細表示 */
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <p className="text-xs text-gray-500">
+                      {solverResults.items.length}件の候補
+                      {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
+                      {solverResults.skippedCount > 0 && (
+                        <span className="text-gray-400 ml-1">
+                          （各マス3件まで、{solverResults.skippedCount}件省略）
+                        </span>
+                      )}
+                    </p>
+                    {solverResults.items.map((result, index) => (
+                      <div key={index} className="bg-gray-50 rounded p-2 border border-gray-200">
+                        <div className="flex items-center gap-1 mb-1">
+                          <span className="text-sm font-bold text-orange-600">📍 {result.answerLabel}</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {result.hintTexts.map((hintText, i) => (
+                            <div key={i} className="flex items-start gap-1 text-xs">
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-700">{hintText}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

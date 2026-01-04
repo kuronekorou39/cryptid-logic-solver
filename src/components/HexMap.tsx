@@ -50,6 +50,7 @@ interface PlayerPossibleCells {
 interface HexMapProps {
   config: MapConfig;
   highlightedCells?: Set<string>; // "col-row" 形式のセット（構造物選択用）
+  solverCandidateCells?: Set<string>; // ソルバー候補セル（オレンジ枠で表示）
   playerPossibleCells?: PlayerPossibleCells[];  // プレイヤーごとの可能セル
   onCellClick?: (col: number, row: number) => void;
   rotation?: 0 | 90 | 180 | 270;
@@ -460,7 +461,7 @@ const TERRAIN_PATTERN_IDS: Record<TerrainType, string> = {
   water: 'pattern-water',
 };
 
-export function HexMap({ config, highlightedCells, playerPossibleCells, onCellClick, rotation = 0, playerMarkers, dimmed = false }: HexMapProps) {
+export function HexMap({ config, highlightedCells, solverCandidateCells, playerPossibleCells, onCellClick, rotation = 0, playerMarkers, dimmed = false }: HexMapProps) {
   const cells = useMemo(() => generateMapCells(config), [config]);
   const tileLabels = useMemo(() => getTileLabels(config), [config]);
 
@@ -588,7 +589,7 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                 />
               )}
 
-              {/* プレイヤーごとの可能セルオーバーレイ（最上位レイヤー） */}
+              {/* プレイヤーごとの可能セルオーバーレイ */}
               {!isEmpty && possiblePlayers.map((player) => {
                 const playerColorKey = PLAYER_ID_TO_COLOR[player.playerId];
                 const isAll = playerColorKey === 'all';
@@ -607,6 +608,17 @@ export function HexMap({ config, highlightedCells, playerPossibleCells, onCellCl
                   />
                 );
               })}
+
+              {/* ソルバー候補セル（最上位レイヤー：オレンジ枠） */}
+              {!isEmpty && solverCandidateCells?.has(cellKey) && (
+                <polygon
+                  points={getHexPoints(x, y)}
+                  fill="#f97316"
+                  fillOpacity={0.3}
+                  stroke="#f97316"
+                  strokeWidth={3}
+                />
+              )}
             </g>
           );
         })}
