@@ -201,6 +201,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
   const [hideOffItems, setHideOffItems] = useState(false)
   const [solverResults, setSolverResults] = useState<SolverResult | null>(null)
   const [showSolver, setShowSolver] = useState(false)
+  const [solverViewMode, setSolverViewMode] = useState<'summary' | 'detail'>('summary')
 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
@@ -564,7 +565,33 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             {/* ヘッダー */}
             <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h2 className="font-bold text-gray-800">🔍 解の候補</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="font-bold text-gray-800">🔍 解の候補</h2>
+                {solverResults.items.length > 0 && (
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setSolverViewMode('summary')}
+                      className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                        solverViewMode === 'summary'
+                          ? 'bg-white text-gray-800 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      一覧
+                    </button>
+                    <button
+                      onClick={() => setSolverViewMode('detail')}
+                      className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                        solverViewMode === 'detail'
+                          ? 'bg-white text-gray-800 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      詳細
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => setShowSolver(false)}
                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -603,25 +630,56 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                     </div>
                   )}
 
-                  <p className="text-sm text-gray-500">
-                    {solverResults.items.length}件の候補
-                    {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
-                  </p>
-                  {solverResults.items.map((result, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-lg font-bold text-orange-600">📍 {result.answerLabel}</span>
-                      </div>
-                      <div className="space-y-1">
-                        {result.hintTexts.map((hintText, i) => (
-                          <div key={i} className="flex items-start gap-2 text-sm">
-                            <span className="text-gray-400">•</span>
-                            <span className="text-gray-700">{hintText}</span>
-                          </div>
-                        ))}
-                      </div>
+                  {solverViewMode === 'summary' ? (
+                    /* 一覧表示 */
+                    <div>
+                      {(() => {
+                        // ユニークなセルを抽出
+                        const uniqueCells = [...new Set(solverResults.items.map(r => r.answerLabel))].sort()
+                        return (
+                          <>
+                            <p className="text-sm text-gray-500 mb-3">
+                              {uniqueCells.length}マスの候補
+                              {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {uniqueCells.map((label) => (
+                                <span
+                                  key={label}
+                                  className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg font-medium text-sm"
+                                >
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                          </>
+                        )
+                      })()}
                     </div>
-                  ))}
+                  ) : (
+                    /* 詳細表示 */
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-500">
+                        {solverResults.items.length}件の候補
+                        {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
+                      </p>
+                      {solverResults.items.map((result, index) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg font-bold text-orange-600">📍 {result.answerLabel}</span>
+                          </div>
+                          <div className="space-y-1">
+                            {result.hintTexts.map((hintText, i) => (
+                              <div key={i} className="flex items-start gap-2 text-sm">
+                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-700">{hintText}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
