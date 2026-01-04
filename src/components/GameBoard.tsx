@@ -319,7 +319,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
               }`}
               title={state.selfPlayerId === selectedPlayer.id ? '自分設定を解除' : 'このプレイヤーを自分として設定'}
             >
-              {state.selfPlayerId === selectedPlayer.id ? '👤自分' : '自分'}
+              自分
             </button>
 
             {/* 確定ボタン（残り1つで未確定の場合のみ表示） */}
