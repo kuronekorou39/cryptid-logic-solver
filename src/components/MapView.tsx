@@ -530,14 +530,14 @@ export function MapView({ selectedPlayerId, showPossibleCells }: MapViewProps) {
       )}
 
       {/* 解の候補パネル */}
-      <div className="bg-white rounded-xl shadow p-4">
-        <div className="flex items-center justify-between mb-2">
+      <div className={`bg-white rounded-xl shadow ${showSolver ? 'p-4' : 'px-4 py-2'}`}>
+        <div className={`flex items-center justify-between ${showSolver ? 'mb-2' : ''}`}>
           <h4 className="font-medium text-gray-600 text-sm flex items-center gap-1">
             🔍 解の候補
           </h4>
           <button
             onClick={() => setShowSolver(!showSolver)}
-            className={`px-2 py-1 text-xs rounded transition-colors ${
+            className={`px-2 py-0.5 text-xs rounded transition-colors ${
               showSolver ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
