@@ -328,7 +328,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                 className="text-xs px-1.5 py-0.5 rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors"
                 title="残り1つのヒントを確定する"
               >
-                確定
+                ✓確定
               </button>
             )}
 
@@ -339,7 +339,7 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                 className="text-xs px-1.5 py-0.5 rounded bg-gray-400 text-white hover:bg-gray-500 transition-colors"
                 title="確定を解除する"
               >
-                解除
+                ✓解除
               </button>
             )}
 
