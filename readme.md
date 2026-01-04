@@ -1,45 +1,89 @@
-# Cryptid Logic Solver
+# 🔍 Cryptid Logic Solver
 
-ボードゲーム「クリプティッド」のヒント推論補助ツール。各プレイヤーのヒントを論理的に絞り込み、UMA（未確認生物）の居場所を特定する手助けをします。
+ボードゲーム「クリプティッド」のヒント推論補助ツール
 
-## デモ
+[![Live Demo](https://img.shields.io/badge/demo-GitHub%20Pages-brightgreen)](https://kuronekorou39.github.io/cryptid-logic-solver/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-ready-orange)](https://kuronekorou39.github.io/cryptid-logic-solver/)
 
-**[https://kuronekorou39.github.io/cryptid-logic-solver/](https://kuronekorou39.github.io/cryptid-logic-solver/)**
+<!-- スクリーンショットをここに追加 -->
+<!-- ![Screenshot](docs/screenshot.png) -->
 
-## 機能
+---
 
-### マップ機能
-- **マップビューア** - 6枚のタイルを配置し、ヘックスマップを表示
-- **構造物配置** - 巨石・廃墟の位置を設定
-- **マーカー機能** - マップ上にdisc（○）/cube（×）マーカーを配置
-- **可能セル表示** - 各プレイヤーのヒントに合致するセルを色分け表示
-- **全プレイヤー交差表示** - 全員の可能セルの交差をハイライト（∩ボタン）
+## ✨ 機能
 
-### ヒント管理
-- **自動ヒント計算** - マーカーに基づいて矛盾しないヒントを自動で絞り込み
-- **ヒント確定** - 自分や他プレイヤーのヒントを確定し、他から自動除外
-- **全ON/OFF** - プレイヤーのヒントを一括でON/OFFに切り替え
-- **ヒントフィルター** - 地形アイコンでフィルタリング、OFF非表示オプション
+<table>
+<tr>
+<td align="center" width="33%">
 
-### ソルバー（解の候補探索）
-- **解の候補** - 全プレイヤーのヒント組み合わせから答えが1マスになるパターンを探索
-- **確定ヒント表示** - 自分と他プレイヤーの確定済みヒントを固定表示
-- **一覧/詳細表示** - 候補マスの一覧表示と詳細表示を切り替え
+### 🗺️ マップ設定
+タイル配置・巨石・廃墟の位置を設定
 
-### その他
-- **5プレイヤー対応** - シンボル（α〜ε）で識別、タップで参加/解除
-- **「自分」設定** - 自分のプレイヤーを設定してヒント確定ボタンを表示
-- **2つのゲームモード** - ノーマル（42ヒント）/ アドバンスト（67ヒント）
-- **自動保存** - localStorageによるゲーム状態の永続化
-- **モバイル対応** - スマートフォンでも快適に操作可能
+</td>
+<td align="center" width="33%">
 
-## 技術スタック
+### 📍 マーカー配置
+disc（○）/ cube（×）をマップ上に配置
 
-- React 18 + TypeScript
-- Vite（ビルドツール）
-- Tailwind CSS（スタイリング）
+</td>
+<td align="center" width="33%">
 
-## セットアップ
+### ⚡ 自動計算
+マーカーに基づいてヒントを自動絞り込み
+
+</td>
+</tr>
+<tr>
+<td align="center">
+
+### 🎯 解の候補探索
+答えが1マスになるパターンを自動探索
+
+</td>
+<td align="center">
+
+### ✅ ヒント確定
+確定したヒントを他プレイヤーから自動除外
+
+</td>
+<td align="center">
+
+### 📱 PWA対応
+オフライン動作・ホーム画面に追加可能
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🎮 使い方
+
+```
+1️⃣ マップを設定     →  タイル・巨石・廃墟の位置を入力
+2️⃣ プレイヤーを有効化  →  α〜εタブをタップ
+3️⃣ マーカーを配置    →  マップ上で○/×を配置
+4️⃣ ヒントを確認     →  自動で絞り込まれた候補を確認
+```
+
+> 💡 **ヒント**: 右上の `?` ボタンで詳しい使い方を確認できます
+
+---
+
+## 🛠️ 技術スタック
+
+| | |
+|---|---|
+| ⚛️ React 18 | UI フレームワーク |
+| 📘 TypeScript | 型安全性 |
+| ⚡ Vite | ビルドツール |
+| 🎨 Tailwind CSS | スタイリング |
+| 📦 PWA | オフライン対応 |
+
+---
+
+## 💻 開発
 
 ```bash
 npm install    # 依存関係のインストール
@@ -47,6 +91,16 @@ npm run dev    # 開発サーバー起動
 npm run build  # 本番ビルド
 ```
 
-## ライセンス
+---
+
+## 📄 ライセンス
 
 MIT
+
+---
+
+<p align="center">
+  <a href="https://kuronekorou39.github.io/cryptid-logic-solver/">
+    <strong>🎯 今すぐ使う →</strong>
+  </a>
+</p>
