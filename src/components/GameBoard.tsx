@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useGame } from '../hooks/useGame'
 import { getHintsByMode, PLAYER_COLOR_MAP } from '../data'
+import { findValidCombinations, canRunSolver, type SolverResult } from '../logic/solver'
 import {
   ForestIcon, DesertIcon, SwampIcon, MountainIcon, WaterIcon,
   BearIcon, EagleIcon, AnimalIcon,
@@ -198,6 +199,8 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
   const { state, toggleHint, togglePlayer, toggleAutoMode, setSelfPlayer, confirmHint, unconfirmHint, getConfirmedHintOwner } = useGame()
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
+  const [solverResults, setSolverResults] = useState<SolverResult[] | null>(null)
+  const [showSolver, setShowSolver] = useState(false)
 
   const allHints = getHintsByMode(state.mode)
   const selectedPlayer = state.players.find((p) => p.id === selectedPlayerId)
@@ -234,6 +237,22 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
       togglePlayer(playerId)
     }
     onSelectPlayer(playerId)
+  }
+
+  // ソルバーが実行可能かチェック
+  const solverStatus = useMemo(() => {
+    return canRunSolver(state.mapSettings.tiles, state.selfPlayerId, state.players)
+  }, [state.mapSettings.tiles, state.selfPlayerId, state.players])
+
+  // ソルバー実行
+  const runSolver = () => {
+    const results = findValidCombinations(
+      state.mapSettings.tiles,
+      state.mapSettings.structureCoords,
+      state.players
+    )
+    setSolverResults(results)
+    setShowSolver(true)
   }
 
   // カテゴリ別にヒントを分類し、肯定形と否定形をペアでソート
@@ -400,6 +419,17 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                   </span>
                 )}
               </button>
+
+              {/* ソルバーボタン */}
+              {solverStatus.canRun && (
+                <button
+                  onClick={runSolver}
+                  className="w-7 h-7 rounded-lg text-sm transition-colors flex items-center justify-center bg-orange-100 text-orange-600 hover:bg-orange-200"
+                  title="解の候補を探索"
+                >
+                  🔍
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -524,6 +554,75 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ソルバー結果パネル */}
+      {showSolver && solverResults !== null && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+            {/* ヘッダー */}
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <h2 className="font-bold text-gray-800">🔍 解の候補</h2>
+              <button
+                onClick={() => setShowSolver(false)}
+                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 結果リスト */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {solverResults.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="text-4xl mb-2">🤔</div>
+                  <p>答えが1マスになる組み合わせが見つかりませんでした</p>
+                  <p className="text-sm mt-2">ヒントをもう少し絞り込んでみてください</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500 mb-3">
+                    {solverResults.length}件の候補が見つかりました
+                  </p>
+                  {solverResults.map((result, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg font-bold text-orange-600">📍 {result.answerLabel}</span>
+                      </div>
+                      <div className="space-y-1">
+                        {result.hints.map((hint) => {
+                          const player = state.players.find(p => p.id === hint.playerId)
+                          const isSelf = state.selfPlayerId === hint.playerId
+                          const colorInfo = player ? PLAYER_COLOR_MAP[player.color] : null
+                          return (
+                            <div key={hint.playerId} className="flex items-start gap-2 text-sm">
+                              <span
+                                className={`flex-shrink-0 px-1.5 py-0.5 rounded text-white text-xs ${colorInfo?.bgClass || 'bg-gray-400'}`}
+                              >
+                                {isSelf && '👤'}{player?.symbol || '?'}
+                              </span>
+                              <span className="text-gray-700">{hint.hintText}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* フッター */}
+            <div className="px-4 py-3 border-t">
+              <button
+                onClick={() => setShowSolver(false)}
+                className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
