@@ -22,8 +22,10 @@ function getCellsForHint(
   return cells
 }
 
-/** 結果の最大件数 */
-const MAX_RESULTS = 100
+/** 同じマスの最大パターン数 */
+const MAX_PATTERNS_PER_CELL = 3
+/** 最大マス数（これ以上のマスが見つかったら終了） */
+const MAX_UNIQUE_CELLS = 50
 
 /**
  * ソルバー結果の1件
@@ -31,7 +33,19 @@ const MAX_RESULTS = 100
 export interface SolverResultItem {
   answerCell: string  // 答えのセル（例: "4-2" = E3）
   answerLabel: string // 答えのラベル（例: "E3"）
-  hints: { playerId: string; hintId: string; hintText: string }[]
+  hintIds: string[]   // ヒントIDのリスト（自分のヒントを除く、ソート済み）
+  hintTexts: string[] // ヒントテキストのリスト（自分のヒントを除く）
+}
+
+/**
+ * 確定ヒント情報
+ */
+export interface ConfirmedHintInfo {
+  playerId: string
+  playerSymbol: string
+  playerColor: string
+  hintText: string
+  isSelf: boolean
 }
 
 /**
@@ -39,7 +53,8 @@ export interface SolverResultItem {
  */
 export interface SolverResult {
   items: SolverResultItem[]
-  hasMore: boolean  // 100件を超えた場合true
+  confirmedHints: ConfirmedHintInfo[]  // 確定済みヒント一覧
+  hasMore: boolean
 }
 
 /**
@@ -48,7 +63,8 @@ export interface SolverResult {
 export function findValidCombinations(
   tiles: TileConfig[],
   structureCoords: Record<string, StructureCoord | null>,
-  players: Player[]
+  players: Player[],
+  selfPlayerId: string | null
 ): SolverResult {
   // マップグリッドを構築
   const grid = buildMapGrid(tiles, structureCoords)
@@ -56,8 +72,27 @@ export function findValidCombinations(
   // 有効なプレイヤーのみ対象
   const enabledPlayers = players.filter(p => p.enabled)
   if (enabledPlayers.length < 2) {
-    return { items: [], hasMore: false }
+    return { items: [], confirmedHints: [], hasMore: false }
   }
+
+  // 確定ヒント一覧を収集
+  const confirmedHints: ConfirmedHintInfo[] = enabledPlayers
+    .filter(p => p.confirmedHintId)
+    .map(p => {
+      const hint = getHintById(p.confirmedHintId!)
+      return {
+        playerId: p.id,
+        playerSymbol: p.symbol,
+        playerColor: p.color,
+        hintText: hint?.text || '',
+        isSelf: p.id === selfPlayerId
+      }
+    })
+    .sort((a, b) => {
+      // 自分を最初に、それ以外はシンボル順
+      if (a.isSelf !== b.isSelf) return a.isSelf ? -1 : 1
+      return a.playerSymbol.localeCompare(b.playerSymbol)
+    })
 
   // 各プレイヤーのヒント候補を取得
   // confirmedHintIdがあればそれだけ、なければpossibleHintIds
@@ -68,9 +103,20 @@ export function findValidCombinations(
       : player.possibleHintIds
   }))
 
+  // 確定済みヒントIDの集合（結果から除外用）
+  const confirmedHintIds = new Set(confirmedHints.map(h => {
+    const player = enabledPlayers.find(p => p.id === h.playerId)
+    return player?.confirmedHintId
+  }).filter((id): id is string => !!id))
+
   // 全組み合わせを生成して評価
   const results: SolverResultItem[] = []
   let hasMore = false
+
+  // 各セルごとの結果数をトラック
+  const cellPatternCount = new Map<string, number>()
+  // 各セルごとに見たヒント組み合わせを記録（重複排除用）
+  const seenCombinations = new Map<string, Set<string>>()
 
   // 各ヒントの可能セルをキャッシュ
   const hintCellsCache = new Map<string, Set<string>>()
@@ -91,8 +137,8 @@ export function findValidCombinations(
     playerIndex: number,
     currentCombination: { playerId: string; hintId: string }[]
   ): boolean {
-    // 上限に達したら終了
-    if (results.length >= MAX_RESULTS) {
+    // 上限に達したら終了（ユニークセル数が上限を超えた）
+    if (cellPatternCount.size >= MAX_UNIQUE_CELLS) {
       hasMore = true
       return false
     }
@@ -140,35 +186,62 @@ export function findValidCombinations(
     // 交差がちょうど1マスなら結果に追加
     if (intersection && intersection.size === 1) {
       const answerCell = [...intersection][0]
+
+      // 確定済みヒントを除いたヒントIDリスト（ソート済み）
+      const otherHintIds = combination
+        .map(c => c.hintId)
+        .filter(id => !confirmedHintIds.has(id))
+        .sort()
+
+      // この組み合わせがすでに見られたかチェック
+      const fingerprint = otherHintIds.join(',')
+      if (!seenCombinations.has(answerCell)) {
+        seenCombinations.set(answerCell, new Set())
+      }
+      const seenForCell = seenCombinations.get(answerCell)!
+      if (seenForCell.has(fingerprint)) {
+        return // すでに同じヒント組み合わせがある
+      }
+
+      // このセルのパターン数をチェック
+      const currentCount = cellPatternCount.get(answerCell) || 0
+      if (currentCount >= MAX_PATTERNS_PER_CELL) {
+        return // このセルはすでに上限に達している
+      }
+
       const [col, row] = answerCell.split('-').map(Number)
       const answerLabel = `${String.fromCharCode(65 + col)}${row + 1}`
+
+      // ヒントテキストを取得
+      const hintTexts = otherHintIds.map(id => {
+        const hint = getHintById(id)
+        return hint?.text || ''
+      })
 
       results.push({
         answerCell,
         answerLabel,
-        hints: combination.map(c => {
-          const hint = getHintById(c.hintId)
-          return {
-            playerId: c.playerId,
-            hintId: c.hintId,
-            hintText: hint?.text || ''
-          }
-        })
+        hintIds: otherHintIds,
+        hintTexts
       })
+
+      // 記録を更新
+      seenForCell.add(fingerprint)
+      cellPatternCount.set(answerCell, currentCount + 1)
     }
   }
 
   generateCombinations(0, [])
 
-  // 答えのセルでソート、同じセルなら最初のプレイヤーのヒントでソート
+  // 答えのセルでソート、同じセルなら最初のヒントでソート
   results.sort((a, b) => {
     if (a.answerLabel !== b.answerLabel) {
       return a.answerLabel.localeCompare(b.answerLabel)
     }
-    return a.hints[0].hintText.localeCompare(b.hints[0].hintText)
+    return (a.hintTexts[0] || '').localeCompare(b.hintTexts[0] || '')
   })
 
-  return { items: results, hasMore }
+  return { items: results, confirmedHints, hasMore }
 }
 
 /**

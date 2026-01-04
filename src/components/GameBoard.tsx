@@ -249,7 +249,8 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
     const results = findValidCombinations(
       state.mapSettings.tiles,
       state.mapSettings.structureCoords,
-      state.players
+      state.players,
+      state.selfPlayerId
     )
     setSolverResults(results)
     setShowSolver(true)
@@ -582,9 +583,29 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-500 mb-3">
+                  {/* 確定済みヒント（共通） */}
+                  {solverResults.confirmedHints.length > 0 && (
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 space-y-1">
+                      <div className="text-xs text-blue-600 mb-1">確定済みヒント</div>
+                      {solverResults.confirmedHints.map((hint) => {
+                        const colorInfo = PLAYER_COLOR_MAP[hint.playerColor as keyof typeof PLAYER_COLOR_MAP]
+                        return (
+                          <div key={hint.playerId} className="flex items-center gap-2 text-sm">
+                            <span
+                              className={`flex-shrink-0 px-1.5 py-0.5 rounded text-white text-xs ${colorInfo?.bgClass || 'bg-gray-400'}`}
+                            >
+                              {hint.isSelf && '👤'}{hint.playerSymbol}
+                            </span>
+                            <span className="text-gray-700">{hint.hintText}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <p className="text-sm text-gray-500">
                     {solverResults.items.length}件の候補
-                    {solverResults.hasMore && <span className="text-orange-500">（100件以上あり、省略）</span>}
+                    {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
                   </p>
                   {solverResults.items.map((result, index) => (
                     <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -592,21 +613,12 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                         <span className="text-lg font-bold text-orange-600">📍 {result.answerLabel}</span>
                       </div>
                       <div className="space-y-1">
-                        {result.hints.map((hint) => {
-                          const player = state.players.find(p => p.id === hint.playerId)
-                          const isSelf = state.selfPlayerId === hint.playerId
-                          const colorInfo = player ? PLAYER_COLOR_MAP[player.color] : null
-                          return (
-                            <div key={hint.playerId} className="flex items-start gap-2 text-sm">
-                              <span
-                                className={`flex-shrink-0 px-1.5 py-0.5 rounded text-white text-xs ${colorInfo?.bgClass || 'bg-gray-400'}`}
-                              >
-                                {isSelf && '👤'}{player?.symbol || '?'}
-                              </span>
-                              <span className="text-gray-700">{hint.hintText}</span>
-                            </div>
-                          )
-                        })}
+                        {result.hintTexts.map((hintText, i) => (
+                          <div key={i} className="flex items-start gap-2 text-sm">
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-700">{hintText}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
