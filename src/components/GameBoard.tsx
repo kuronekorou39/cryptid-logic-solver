@@ -346,17 +346,17 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
             {/* 全ON/OFFボタン */}
             <button
               onClick={() => setAllHints(selectedPlayer.id, true)}
-              className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+              className="w-6 h-6 flex items-center justify-center rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
               title="全ヒントをONにする"
             >
-              全ON
+              ☑
             </button>
             <button
               onClick={() => setAllHints(selectedPlayer.id, false)}
-              className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+              className="w-6 h-6 flex items-center justify-center rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
               title="全ヒントをOFFにする"
             >
-              全OFF
+              ☐
             </button>
 
             <div className="flex-1" />
