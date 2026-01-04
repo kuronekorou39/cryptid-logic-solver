@@ -22,13 +22,24 @@ function getCellsForHint(
   return cells
 }
 
+/** 結果の最大件数 */
+const MAX_RESULTS = 100
+
+/**
+ * ソルバー結果の1件
+ */
+export interface SolverResultItem {
+  answerCell: string  // 答えのセル（例: "4-2" = E3）
+  answerLabel: string // 答えのラベル（例: "E3"）
+  hints: { playerId: string; hintId: string; hintText: string }[]
+}
+
 /**
  * ソルバー結果
  */
 export interface SolverResult {
-  answerCell: string  // 答えのセル（例: "4-2" = E3）
-  answerLabel: string // 答えのラベル（例: "E3"）
-  hints: { playerId: string; hintId: string; hintText: string }[]
+  items: SolverResultItem[]
+  hasMore: boolean  // 100件を超えた場合true
 }
 
 /**
@@ -38,14 +49,14 @@ export function findValidCombinations(
   tiles: TileConfig[],
   structureCoords: Record<string, StructureCoord | null>,
   players: Player[]
-): SolverResult[] {
+): SolverResult {
   // マップグリッドを構築
   const grid = buildMapGrid(tiles, structureCoords)
 
   // 有効なプレイヤーのみ対象
   const enabledPlayers = players.filter(p => p.enabled)
   if (enabledPlayers.length < 2) {
-    return []
+    return { items: [], hasMore: false }
   }
 
   // 各プレイヤーのヒント候補を取得
@@ -58,7 +69,8 @@ export function findValidCombinations(
   }))
 
   // 全組み合わせを生成して評価
-  const results: SolverResult[] = []
+  const results: SolverResultItem[] = []
+  let hasMore = false
 
   // 各ヒントの可能セルをキャッシュ
   const hintCellsCache = new Map<string, Set<string>>()
@@ -78,20 +90,28 @@ export function findValidCombinations(
   function generateCombinations(
     playerIndex: number,
     currentCombination: { playerId: string; hintId: string }[]
-  ): void {
+  ): boolean {
+    // 上限に達したら終了
+    if (results.length >= MAX_RESULTS) {
+      hasMore = true
+      return false
+    }
+
     if (playerIndex >= playerHintOptions.length) {
       // 全プレイヤー分のヒントが決まった
       evaluateCombination(currentCombination)
-      return
+      return true
     }
 
     const { player, hintIds } = playerHintOptions[playerIndex]
     for (const hintId of hintIds) {
-      generateCombinations(playerIndex + 1, [
+      const shouldContinue = generateCombinations(playerIndex + 1, [
         ...currentCombination,
         { playerId: player.id, hintId }
       ])
+      if (!shouldContinue) return false
     }
+    return true
   }
 
   function evaluateCombination(
@@ -148,7 +168,7 @@ export function findValidCombinations(
     return a.hints[0].hintText.localeCompare(b.hints[0].hintText)
   })
 
-  return results
+  return { items: results, hasMore }
 }
 
 /**
