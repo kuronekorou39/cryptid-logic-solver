@@ -1,7 +1,7 @@
 import { useState, useMemo, useContext } from 'react';
 import { HexMap } from './HexMap';
 import { type MapConfig } from '../data/map-tiles';
-import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, TileIcon } from './Icons';
+import { GreenStoneIcon, BlueStoneIcon, WhiteShackIcon, TileIcon, SolverIcon } from './Icons';
 import { GameContext } from '../context/GameContext';
 import type { StructureColor, MarkerType } from '../types';
 import { calculatePossibleCells } from '../logic/possible-cells';
@@ -294,6 +294,16 @@ export function MapView({ selectedPlayerId, showPossibleCells, showAllPlayers }:
                 </span>
               )}
             </button>
+            {/* 解の候補 */}
+            <button
+              onClick={() => setShowSolver(!showSolver)}
+              className={`relative w-10 h-10 rounded-lg transition-colors flex items-center justify-center ${
+                showSolver ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="解の候補"
+            >
+              <SolverIcon className="w-5 h-5" />
+            </button>
             {/* 回転ボタン（右下） */}
             <button
               onClick={rotateClockwise}
@@ -518,23 +528,16 @@ export function MapView({ selectedPlayerId, showPossibleCells, showAllPlayers }:
       )}
 
       {/* 解の候補パネル */}
-      <div className={`bg-white rounded-xl shadow ${showSolver ? 'p-4' : 'px-4 py-2'}`}>
-        <div className={`flex items-center justify-between ${showSolver ? 'mb-2' : ''}`}>
+      {showSolver && (
+      <div className="bg-white rounded-xl shadow p-4">
+        <div className="flex items-center justify-between mb-2">
           <h4 className="font-medium text-gray-600 text-sm flex items-center gap-1">
-            🔍 解の候補
+            <SolverIcon className="w-4 h-4" />
+            解の候補
           </h4>
-          <button
-            onClick={() => setShowSolver(!showSolver)}
-            className={`px-2 py-0.5 text-xs rounded transition-colors ${
-              showSolver ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {showSolver ? '閉じる' : '開く'}
-          </button>
         </div>
 
-        {showSolver && (
-          <div className="space-y-3">
+        <div className="space-y-3">
             {/* 実行条件チェック */}
             {!solverStatus.canRun ? (
               <div className="text-sm text-gray-500 bg-gray-50 rounded p-3">
@@ -678,8 +681,8 @@ export function MapView({ selectedPlayerId, showPossibleCells, showAllPlayers }:
               </div>
             )}
           </div>
-        )}
       </div>
+      )}
     </div>
   );
 }
