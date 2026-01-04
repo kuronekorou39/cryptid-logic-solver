@@ -322,6 +322,17 @@ export function MapView({ selectedPlayerId, showPossibleCells, showAllPlayers }:
           <h4 className="font-medium text-gray-600 text-sm mb-2 flex items-center gap-1">
             <TileIcon className="w-4 h-4" />
             タイル配置
+            <span className="flex-1" />
+            <button
+              onClick={() => {
+                const emptyTiles = Array(6).fill(null).map(() => ({ tileId: null, reversed: false }));
+                setTiles(emptyTiles, 0);
+              }}
+              className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors"
+              title="タイル配置をリセット"
+            >
+              リセット
+            </button>
           </h4>
           <div className="grid grid-cols-2 gap-1">
             {tileConfig.map((tile, index) => (
@@ -375,6 +386,16 @@ export function MapView({ selectedPlayerId, showPossibleCells, showAllPlayers }:
           <h4 className="font-medium text-gray-600 text-sm mb-2 flex items-center gap-1">
             <GreenStoneIcon className="w-4 h-4" />
             巨石
+            <span className="flex-1" />
+            <button
+              onClick={() => {
+                STRUCTURE_DEFS.filter(d => d.type === 'stone').forEach(d => setStructureCoord(d.id, null));
+              }}
+              className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors"
+              title="巨石配置をリセット"
+            >
+              リセット
+            </button>
           </h4>
           <div className="space-y-1">
             {STRUCTURE_DEFS.filter((def) => def.type === 'stone' && (isAdvanced || def.color !== 'black')).map((def) => {
@@ -454,6 +475,16 @@ export function MapView({ selectedPlayerId, showPossibleCells, showAllPlayers }:
           <h4 className="font-medium text-gray-600 text-sm mb-2 flex items-center gap-1">
             <WhiteShackIcon className="w-4 h-4" />
             廃墟
+            <span className="flex-1" />
+            <button
+              onClick={() => {
+                STRUCTURE_DEFS.filter(d => d.type === 'shack').forEach(d => setStructureCoord(d.id, null));
+              }}
+              className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors"
+              title="廃墟配置をリセット"
+            >
+              リセット
+            </button>
           </h4>
           <div className="space-y-1">
             {STRUCTURE_DEFS.filter((def) => def.type === 'shack' && (isAdvanced || def.color !== 'black')).map((def) => {
