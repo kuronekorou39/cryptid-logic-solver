@@ -99,7 +99,7 @@ export function Header() {
                       <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-600">
                         <TileIcon className="w-4 h-4" />
                       </div>
-                      <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-green-600">
+                      <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-lime-500">
                         <GreenStoneIcon className="w-4 h-4" />
                       </div>
                       <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-600">
