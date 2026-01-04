@@ -6,55 +6,20 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-ready-orange)](https://kuronekorou39.github.io/cryptid-logic-solver/)
 
-<!-- スクリーンショットをここに追加 -->
-<!-- ![Screenshot](docs/screenshot.png) -->
+<p align="center">
+  <img src="docs/screenshot.png" alt="Screenshot" width="360" />
+</p>
 
 ---
 
 ## ✨ 機能
 
-<table>
-<tr>
-<td align="center" width="33%">
-
-### 🗺️ マップ設定
-タイル配置・巨石・廃墟の位置を設定
-
-</td>
-<td align="center" width="33%">
-
-### 📍 マーカー配置
-disc（○）/ cube（×）をマップ上に配置
-
-</td>
-<td align="center" width="33%">
-
-### ⚡ 自動計算
-マーカーに基づいてヒントを自動絞り込み
-
-</td>
-</tr>
-<tr>
-<td align="center">
-
-### 🎯 解の候補探索
-答えが1マスになるパターンを自動探索
-
-</td>
-<td align="center">
-
-### ✅ ヒント確定
-確定したヒントを他プレイヤーから自動除外
-
-</td>
-<td align="center">
-
-### 📱 PWA対応
-オフライン動作・ホーム画面に追加可能
-
-</td>
-</tr>
-</table>
+- **マップ設定** - タイル配置・巨石・廃墟の位置を設定
+- **マーカー配置** - disc / cube をマップ上に配置
+- **自動計算** - マーカーに基づいてヒントを自動絞り込み
+- **解の候補探索** - 答えが1マスになるパターンを自動探索
+- **ヒント確定** - 確定したヒントを他プレイヤーから自動除外
+- **PWA対応** - オフライン動作・ホーム画面に追加可能
 
 ---
 
@@ -73,13 +38,7 @@ disc（○）/ cube（×）をマップ上に配置
 
 ## 🛠️ 技術スタック
 
-| | |
-|---|---|
-| ⚛️ React 18 | UI フレームワーク |
-| 📘 TypeScript | 型安全性 |
-| ⚡ Vite | ビルドツール |
-| 🎨 Tailwind CSS | スタイリング |
-| 📦 PWA | オフライン対応 |
+React 18 / TypeScript / Vite / Tailwind CSS / PWA
 
 ---
 
