@@ -254,8 +254,9 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
 
   return (
     <div>
-      {/* 固定5タブ */}
+      {/* 固定ヘッダー（タブ + オプションバー） */}
       <div className="sticky top-0 z-10 bg-gray-100 pb-2">
+        {/* 5タブ */}
         <div className="flex border-b border-gray-300 bg-white rounded-t-lg overflow-hidden">
           {state.players.map((player) => {
             const colorInfo = PLAYER_COLOR_MAP[player.color]
@@ -292,13 +293,11 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
             )
           })}
         </div>
-      </div>
 
-
-      {/* オプションバー（有効なプレイヤーのみ表示） */}
-      {selectedPlayer?.enabled && (
-        <div className="bg-white rounded-xl shadow px-3 py-2 mb-3">
-          <div className="flex items-center gap-1.5">
+        {/* オプションバー（有効なプレイヤーのみ表示） */}
+        {selectedPlayer?.enabled && (
+          <div className="bg-white rounded-b-lg shadow-sm px-3 py-2 border-x border-b border-gray-200">
+            <div className="flex items-center gap-1.5">
             {/* 参加解除ボタン */}
             <button
               onClick={() => togglePlayer(selectedPlayer.id)}
@@ -419,8 +418,9 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
 
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* ヒントリスト（有効なプレイヤーのみ表示） */}
       {selectedPlayer?.enabled && (
