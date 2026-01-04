@@ -55,6 +55,7 @@ export interface SolverResult {
   items: SolverResultItem[]
   confirmedHints: ConfirmedHintInfo[]  // 確定済みヒント一覧
   hasMore: boolean
+  skippedCount: number  // スキップされたパターン数
 }
 
 /**
@@ -72,7 +73,7 @@ export function findValidCombinations(
   // 有効なプレイヤーのみ対象
   const enabledPlayers = players.filter(p => p.enabled)
   if (enabledPlayers.length < 2) {
-    return { items: [], confirmedHints: [], hasMore: false }
+    return { items: [], confirmedHints: [], hasMore: false, skippedCount: 0 }
   }
 
   // 確定ヒント一覧を収集
@@ -112,6 +113,7 @@ export function findValidCombinations(
   // 全組み合わせを生成して評価
   const results: SolverResultItem[] = []
   let hasMore = false
+  let skippedCount = 0
 
   // 各セルごとの結果数をトラック
   const cellPatternCount = new Map<string, number>()
@@ -206,6 +208,8 @@ export function findValidCombinations(
       // このセルのパターン数をチェック
       const currentCount = cellPatternCount.get(answerCell) || 0
       if (currentCount >= MAX_PATTERNS_PER_CELL) {
+        skippedCount++
+        seenForCell.add(fingerprint) // 重複カウント防止
         return // このセルはすでに上限に達している
       }
 
@@ -241,7 +245,7 @@ export function findValidCombinations(
     return (a.hintTexts[0] || '').localeCompare(b.hintTexts[0] || '')
   })
 
-  return { items: results, confirmedHints, hasMore }
+  return { items: results, confirmedHints, hasMore, skippedCount }
 }
 
 /**

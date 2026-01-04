@@ -641,6 +641,11 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                             <p className="text-sm text-gray-500 mb-3">
                               {uniqueCells.length}マスの候補
                               {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
+                              {solverResults.skippedCount > 0 && (
+                                <span className="text-gray-400 text-xs ml-1">
+                                  （各マス3件まで表示、{solverResults.skippedCount}件省略）
+                                </span>
+                              )}
                             </p>
                             <div className="flex flex-wrap gap-2">
                               {uniqueCells.map((label) => (
@@ -662,6 +667,11 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                       <p className="text-sm text-gray-500">
                         {solverResults.items.length}件の候補
                         {solverResults.hasMore && <span className="text-orange-500">（50マス以上あり、省略）</span>}
+                        {solverResults.skippedCount > 0 && (
+                          <span className="text-gray-400 text-xs ml-1">
+                            （各マス3件まで、{solverResults.skippedCount}件省略）
+                          </span>
+                        )}
                       </p>
                       {solverResults.items.map((result, index) => (
                         <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
