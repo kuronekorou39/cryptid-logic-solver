@@ -192,9 +192,11 @@ interface GameBoardProps {
   onSelectPlayer: (playerId: string) => void
   showPossibleCells: boolean
   onToggleShowPossibleCells: () => void
+  showAllPlayers: boolean
+  onToggleShowAllPlayers: () => void
 }
 
-export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells, onToggleShowPossibleCells }: GameBoardProps) {
+export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells, onToggleShowPossibleCells, showAllPlayers, onToggleShowAllPlayers }: GameBoardProps) {
   const { state, toggleHint, togglePlayer, toggleAutoMode, setSelfPlayer, confirmHint, unconfirmHint, getConfirmedHintOwner, setAllHints } = useGame()
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
@@ -414,6 +416,19 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                     <span className="w-6 h-0.5 bg-red-500 rotate-45 rounded" />
                   </span>
                 )}
+              </button>
+
+              {/* 全プレイヤー交差表示 */}
+              <button
+                onClick={onToggleShowAllPlayers}
+                className={`relative w-7 h-7 rounded-lg text-sm font-bold transition-colors flex items-center justify-center ${
+                  showAllPlayers
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                }`}
+                title={showAllPlayers ? '全プレイヤーの交差表示 ON' : '全プレイヤーの交差表示 OFF'}
+              >
+                ∩
               </button>
 
             </div>

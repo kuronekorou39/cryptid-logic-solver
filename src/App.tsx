@@ -7,6 +7,7 @@ import { Header } from './components/Header'
 function App() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('α')
   const [showPossibleCells, setShowPossibleCells] = useState(true)
+  const [showAllPlayers, setShowAllPlayers] = useState(false)
 
   return (
     <GameProvider>
@@ -15,7 +16,11 @@ function App() {
         <main className="flex-1 flex flex-col overflow-hidden container mx-auto px-3 py-3 max-w-2xl">
           {/* マップ（固定表示） */}
           <div className="flex-shrink-0">
-            <MapView selectedPlayerId={selectedPlayerId} showPossibleCells={showPossibleCells} />
+            <MapView
+              selectedPlayerId={selectedPlayerId}
+              showPossibleCells={showPossibleCells}
+              showAllPlayers={showAllPlayers}
+            />
           </div>
 
           {/* ヒント管理（スクロール領域） */}
@@ -25,6 +30,8 @@ function App() {
               onSelectPlayer={setSelectedPlayerId}
               showPossibleCells={showPossibleCells}
               onToggleShowPossibleCells={() => setShowPossibleCells(!showPossibleCells)}
+              showAllPlayers={showAllPlayers}
+              onToggleShowAllPlayers={() => setShowAllPlayers(!showAllPlayers)}
             />
           </div>
         </main>
