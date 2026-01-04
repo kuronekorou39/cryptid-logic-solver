@@ -195,7 +195,7 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells, onToggleShowPossibleCells }: GameBoardProps) {
-  const { state, toggleHint, togglePlayer, toggleAutoMode, setSelfPlayer, confirmHint, unconfirmHint, getConfirmedHintOwner } = useGame()
+  const { state, toggleHint, togglePlayer, toggleAutoMode, setSelfPlayer, confirmHint, unconfirmHint, getConfirmedHintOwner, setAllHints } = useGame()
   const [terrainFilters, setTerrainFilters] = useState<TerrainType[]>([])
   const [hideOffItems, setHideOffItems] = useState(false)
 
@@ -342,6 +342,22 @@ export function GameBoard({ selectedPlayerId, onSelectPlayer, showPossibleCells,
                 ✓解除
               </button>
             )}
+
+            {/* 全ON/OFFボタン */}
+            <button
+              onClick={() => setAllHints(selectedPlayer.id, true)}
+              className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+              title="全ヒントをONにする"
+            >
+              全ON
+            </button>
+            <button
+              onClick={() => setAllHints(selectedPlayer.id, false)}
+              className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+              title="全ヒントをOFFにする"
+            >
+              全OFF
+            </button>
 
             <div className="flex-1" />
 

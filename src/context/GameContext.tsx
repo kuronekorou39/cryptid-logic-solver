@@ -26,6 +26,7 @@ type GameReducerAction =
   | { type: 'SET_SELF_PLAYER'; payload: string | null }  // playerId or null
   | { type: 'CONFIRM_HINT'; payload: { playerId: string; hintId: string } }
   | { type: 'UNCONFIRM_HINT'; payload: string }  // playerId
+  | { type: 'SET_ALL_HINTS'; payload: { playerId: string; enabled: boolean } }  // 全ヒントON/OFF
 
 // ========================================
 // Initial State
@@ -450,6 +451,36 @@ function gameReducer(state: GameState, action: GameReducerAction): GameState {
       }
     }
 
+    case 'SET_ALL_HINTS': {
+      const { playerId, enabled } = action.payload
+      // 他プレイヤーの確定ヒントを取得（ONにする場合は除外する）
+      const otherConfirmedHintIds = state.players
+        .filter(p => p.id !== playerId && p.confirmedHintId)
+        .map(p => p.confirmedHintId!)
+
+      const updatedPlayers = state.players.map(player => {
+        if (player.id === playerId) {
+          if (enabled) {
+            // 全ON: 他プレイヤーの確定ヒントを除いて全ヒントをON
+            const allHints = getAllHintIds(state.mode)
+            return {
+              ...player,
+              possibleHintIds: allHints.filter(id => !otherConfirmedHintIds.includes(id))
+            }
+          } else {
+            // 全OFF: 空配列に
+            return { ...player, possibleHintIds: [] }
+          }
+        }
+        return player
+      })
+      return {
+        ...state,
+        players: updatedPlayers,
+        updatedAt: Date.now(),
+      }
+    }
+
     default:
       return state
   }
@@ -484,6 +515,8 @@ interface GameContextValue {
   confirmHint: (playerId: string, hintId: string) => void
   unconfirmHint: (playerId: string) => void
   getConfirmedHintOwner: (hintId: string) => string | null
+  // Batch hint operations
+  setAllHints: (playerId: string, enabled: boolean) => void
 }
 
 export const GameContext = createContext<GameContextValue | null>(null)
@@ -572,6 +605,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     confirmHint: (playerId, hintId) => dispatch({ type: 'CONFIRM_HINT', payload: { playerId, hintId } }),
     unconfirmHint: (playerId) => dispatch({ type: 'UNCONFIRM_HINT', payload: playerId }),
     getConfirmedHintOwner,
+    setAllHints: (playerId, enabled) => dispatch({ type: 'SET_ALL_HINTS', payload: { playerId, enabled } }),
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>
